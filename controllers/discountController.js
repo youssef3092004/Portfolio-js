@@ -25,3 +25,36 @@ const getDiscount = async (req, res, next) => {
       next(error);
     }
   };
+
+  const createDiscount = async (req, res, next) => {
+    try {
+      const { code, discount, start_date, end_date, status } = req.body;
+      const newDiscount = new Discount({
+        code,
+        discount,
+        start_date,
+        end_date,
+        status,
+      });
+      if (!code) {
+        res.status(400);
+        throw new Error("Code is required");
+      }
+      if (!discount) {
+        res.status(400);
+        throw new Error("Discount is required");
+      }
+      if (!start_date) {
+        res.status(400);
+        throw new Error("Start Date is required");
+      }
+      if (!end_date) {
+        res.status(400);
+        throw new Error("End Date is required");
+      }
+      const savedDiscount = await newDiscount.save();
+      return res.status(201).json(savedDiscount);
+    } catch (error) {
+      next(error);
+    }
+  };
