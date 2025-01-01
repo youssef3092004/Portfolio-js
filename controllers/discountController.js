@@ -95,3 +95,16 @@ const updateDiscount = async (req, res, next) => {
     next(error);
   }
 };
+
+const deleteDiscount = async (req, res, next) => {
+    try {
+      const discount = await Discount.findByIdAndDelete(req.params.id);
+      if (!discount) {
+        res.status(404);
+        throw new Error("There is no discount by this ID");
+      }
+      return res.status(200).json(discount);
+    } catch (error) {
+      next(error);
+    }
+  };
