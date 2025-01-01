@@ -76,3 +76,51 @@ const createAmenity = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @route PUT /api/amenities/:id
+ * @desc Update an existing amenity by its ID in the database.
+ * @access Public
+ * @param {string} id - The ID of the amenity to update.
+ * @body {Object} - The fields to update in the amenity:
+ *  - {string} name - The new name of the amenity (optional).
+ *  - {string} description - The new description of the amenity (optional).
+ *  - {Array} hotel_amenities - The updated list of hotel amenities (optional).
+ * @throws {Error} If required fields are missing, returns a 400 status with an error message.
+ * @throws {Error} If the amenity with the provided ID is not found, returns a 404 status with an error message.
+ * @returns {Object} The updated amenity object.
+ * 
+ * This route handler updates an existing amenity by its ID. It first checks if any required fields are missing in the request body.
+ * Then, it uses `Amenity.findByIdAndUpdate()` to update the amenity in the database. If the amenity is not found or the update fails, a 404 error is thrown.
+ * If the amenity is successfully updated, it is returned in a JSON format with a 200 status code.
+ * If an error occurs during the operation, it is passed to the error handling middleware.
+ */
+const updateAmenity = async (req, res, next) => {
+  try {
+    const { name, description, hotel_amenities } = req.body;
+    const updateField = {};
+    if (name) updateField.name = name;
+    if (description) updateField.description = description;
+    if (hotel_amenities) updateField.hotel_amenities = hotel_amenities;
+    for (let i in updateField) {
+      if (!updateField[i] || updateField[i] === "") {
+        res.status(400);
+        throw new Error(
+          `${i.charAt(0).toUpperCase() + i.slice(1)} is required`
+        );
+      }
+    }
+    const updatedAmenity = await Amenity.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateField },
+      { new: true }
+    );
+    if (!updatedAmenity) {
+      res.status(404);
+      throw new Error("Failed to update the amenity");
+    }
+    res.status(200).json(updatedAmenity);
+  } catch (error) {
+    next(error);
+  }
+};
