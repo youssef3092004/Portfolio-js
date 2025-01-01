@@ -80,3 +80,51 @@ createBooking = async (req, res, next) => {
     next(error);
   }
 };
+
+const updateBooking = async (req, res, next) => {
+  try {
+    const {
+      check_in,
+      check_out,
+      total_price,
+      status,
+      user,
+      hotel,
+      room,
+      discount,
+    } = req.body;
+    const updateField = {};
+    if (check_in) updateField.check_in = check_in;
+    if (check_out) updateField.check_out = check_out;
+    if (total_price) updateField.total_price = total_price;
+    if (status) updateField.status = status;
+    if (user) updateField.user = user;
+    if (hotel) updateField.hotel = hotel;
+    if (room) updateField.room = room;
+    if (discount) updateField.discount = discount;
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("Please provide fields to update");
+    }
+    for (let i in updateField) {
+      if (!updateField[i] || updateField[i] === "") {
+        res.status(400);
+        throw new Error(
+          `${i.charAt(0).toUpperCase() + i.slice(1)} Is Required`
+        );
+      }
+    }
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true }
+    );
+    if (!booking) {
+      res.status(400);
+      throw new Error("no booking with this id" + req.params.id);
+    }
+    res.status(200).json(booking);
+  } catch (error) {
+    next(error);
+  }
+};
