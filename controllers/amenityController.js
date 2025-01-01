@@ -52,3 +52,27 @@ const getAmenity = async (req, res, next) => {
     next(error);
   }
 };
+
+const createAmenity = async (req, res, next) => {
+  try {
+    const { name, description, hotel_amenities } = req.body;
+    const requiredFields = { name, description, hotel_amenities };
+    for (let i in requiredFields) {
+      if (!requiredFields[i]) {
+        res.status(400);
+        throw new Error(
+          `${i.charAt(0).toUpperCase() + i.slice(1)} is required`
+        );
+      }
+    }
+    const newAmenity = new Amenity({
+      name,
+      description,
+      hotel_amenities,
+    });
+    const savedAmenity = await newAmenity.save();
+    res.status(201).json(savedAmenity);
+  } catch (error) {
+    next(error);
+  }
+};
