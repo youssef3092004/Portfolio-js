@@ -12,3 +12,16 @@ const getDiscounts = async (req, res, next) => {
     next(error);
   }
 };
+
+const getDiscount = async (req, res, next) => {
+    try {
+      const discount = await Discount.findById(req.params.id);
+      if (!discount) {
+        res.status(404);
+        throw new Error("There is no discount by this ID");
+      }
+      return res.status(200).json(discount);
+    } catch (error) {
+      next(error);
+    }
+  };
