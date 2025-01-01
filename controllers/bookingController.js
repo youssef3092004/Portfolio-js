@@ -128,3 +128,24 @@ const updateBooking = async (req, res, next) => {
     next(error);
   }
 };
+
+const deleteBooking = async (req, res, next) => {
+  try {
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+    if (!booking) {
+      res.status(400);
+      throw new Error("no booking with this id" + req.params.id);
+    }
+    res.status(200).json(booking);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getBookings,
+  getBooking,
+  createBooking,
+  updateBooking,
+  deleteBooking,
+};
