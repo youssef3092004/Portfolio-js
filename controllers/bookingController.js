@@ -34,7 +34,7 @@ const getBooking = async (req, res, next) => {
   }
 };
 
-createBooking = async (req, res, next) => {
+const createBooking = async (req, res, next) => {
   try {
     const {
       check_in,
