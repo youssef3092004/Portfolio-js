@@ -53,6 +53,21 @@ const getAmenity = async (req, res, next) => {
   }
 };
 
+/**
+ * @route POST /api/amenities
+ * @desc Create a new amenity in the database.
+ * @access Public
+ * @param {string} name - The name of the amenity.
+ * @param {string} description - A description of the amenity.
+ * @param {Array} hotel_amenities - Array of hotel amenity IDs that this amenity is associated with.
+ * @throws {Error} If any of the required fields (name, description, hotel_amenities) are missing, returns a 400 status with an error message.
+ * @returns {Object} The newly created amenity.
+ * 
+ * This route handler creates a new amenity by accepting the necessary details in the request body: `name`, `description`, and `hotel_amenities`. 
+ * It first checks if all required fields are provided. If any field is missing, a 400 error is thrown. If all required fields are present, 
+ * it creates a new amenity document and saves it to the database. The newly created amenity is then returned with a 201 status code.
+ * If an error occurs during the operation, it is passed to the error handling middleware.
+ */
 const createAmenity = async (req, res, next) => {
   try {
     const { name, description, hotel_amenities } = req.body;
