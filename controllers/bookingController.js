@@ -1,5 +1,8 @@
-const Booking = require("../models/booking");
-
+const Booking = require("../models/bookingModel");
+const {
+  incrementDiscountUsage,
+  checkDiscountActiveOrInactive,
+} = require("./discountController");
 const getBookings = async (req, res, next) => {
   try {
     const bookings = await Booking.find()
@@ -74,6 +77,10 @@ const createBooking = async (req, res, next) => {
       room,
       discount,
     });
+    if (discount) {
+      await checkDiscountActiveOrInactive(discount);
+      await incrementDiscountUsage(discount);
+    }
     const savedBooking = await newBooking.save();
     res.status(201).json(savedBooking);
   } catch (error) {
@@ -101,7 +108,11 @@ const updateBooking = async (req, res, next) => {
     if (user) updateField.user = user;
     if (hotel) updateField.hotel = hotel;
     if (room) updateField.room = room;
-    if (discount) updateField.discount = discount;
+    if (discount) {
+      updateField.discount = discount;
+      await checkDiscountActiveOrInactive(discount);
+      await incrementDiscountUsage(discount);
+    }
     if (Object.keys(updateField).length === 0) {
       res.status(400);
       throw new Error("Please provide fields to update");
