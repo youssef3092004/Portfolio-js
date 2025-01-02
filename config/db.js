@@ -10,19 +10,26 @@ const dotenv = require("dotenv");
 dotenv.config();
 const mongoose = require("mongoose");
 
-// const DATABASE = process.env.DB_DATABASE || "myDatabase";
-const USERNAME = process.env.DB_USERNAME;
-const PASSWORD = process.env.DB_PASSWORD;
 const HOST = process.env.HOST || "localhost";
 const PORT = process.env.PORT || "27017";
 const DATABASE = process.env.DB_DATABASE || "Bookify";
 
+const args = process.argv.slice(2);
+if (args.length < 2) {
+  console.error("Error: Username and password must be provided!");
+  process.exit(1);
+}
+
+const [username, password] = args;
+process.env.USERNAME = username;
+process.env.PASSWORD = password;
+
 let MONGO_URI;
 
-if (!USERNAME || !PASSWORD) {
+if (!process.env.USERNAME || !process.env.PASSWORD) {
   MONGO_URI = `mongodb://${HOST}:${PORT}/${DATABASE}?retryWrites=true&w=majority`;
 } else {
-  MONGO_URI = `mongodb+srv://${USERNAME}:${PASSWORD}@cluster0.jyduv.mongodb.net/myDatabase?retryWrites=true&w=majority`;
+  MONGO_URI = `mongodb+srv://${process.env.USERNAME}:${process.env.PASSWORD}@cluster0.jyduv.mongodb.net/myDatabase?retryWrites=true&w=majority`;
 }
 
 /**
