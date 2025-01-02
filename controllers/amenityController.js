@@ -1,4 +1,4 @@
-const Amenity = require("../models/amenity");
+const Amenity = require("../models/ameniyModel");
 
 /**
  * @route GET /api/amenities
