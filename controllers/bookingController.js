@@ -1,8 +1,11 @@
 const Booking = require("../models/bookingModel");
+const Room = require("../models/roomModel");
+
 const {
   incrementDiscountUsage,
   checkDiscountActiveOrInactive,
 } = require("./discountController");
+
 const getBookings = async (req, res, next) => {
   try {
     const bookings = await Booking.find()
@@ -39,26 +42,17 @@ const getBooking = async (req, res, next) => {
 
 const createBooking = async (req, res, next) => {
   try {
-    const {
-      check_in,
-      check_out,
-      total_price,
-      status,
-      user,
-      hotel,
-      room,
-      discount,
-    } = req.body;
+    const { check_in, check_out, status, user, hotel, room, discount } =
+      req.body;
     const requiredFields = {
       check_in,
       check_out,
-      total_price,
       status,
       user,
       hotel,
       room,
-      discount,
     };
+
     for (let i in requiredFields) {
       if (!requiredFields[i]) {
         res.status(400);
@@ -67,6 +61,7 @@ const createBooking = async (req, res, next) => {
         );
       }
     }
+    const total_price = await calculateTotalPrice(room, check_in, check_out);
     const newBooking = new Booking({
       check_in,
       check_out,
@@ -83,6 +78,7 @@ const createBooking = async (req, res, next) => {
     }
     const savedBooking = await newBooking.save();
     res.status(201).json(savedBooking);
+    console.log("Booking created successfully");
   } catch (error) {
     next(error);
   }
@@ -90,22 +86,12 @@ const createBooking = async (req, res, next) => {
 
 const updateBooking = async (req, res, next) => {
   try {
-    const {
-      check_in,
-      check_out,
-      total_price,
-      status,
-      user,
-      hotel,
-      room,
-      discount,
-    } = req.body;
+    const { check_in, check_out, status, hotel, room, discount } =
+      req.body;
     const updateField = {};
     if (check_in) updateField.check_in = check_in;
     if (check_out) updateField.check_out = check_out;
-    if (total_price) updateField.total_price = total_price;
     if (status) updateField.status = status;
-    if (user) updateField.user = user;
     if (hotel) updateField.hotel = hotel;
     if (room) updateField.room = room;
     if (discount) {
@@ -125,9 +111,14 @@ const updateBooking = async (req, res, next) => {
         );
       }
     }
+    const findBooking = await Booking.findById(req.params.id);
+    if (check_in || check_out || room) {
+      const total_price = await calculateTotalPrice(findBooking.room, findBooking.check_in, findBooking.check_out);
+      updateField.total_price = total_price;
+    }
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      { $set: updateField },
       { new: true }
     );
     if (!booking) {
@@ -153,10 +144,35 @@ const deleteBooking = async (req, res, next) => {
   }
 };
 
+const calculateTotalPrice = async (rooom, check_in, check_out) => {
+  try {
+    const room = await Room.findById(rooom);
+    if (!room) {
+      throw new Error("Invalid room");
+    }
+    if (room && check_in && check_out) {
+      const checkInDate = new Date(check_in);
+      const checkOutDate = new Date(check_out);
+      if (isNaN(checkInDate) || isNaN(checkOutDate)) {
+        throw new Error("Invalid check-in or check-out date");
+      }
+      if (checkInDate >= checkOutDate) {
+        throw new Error("Check-out date must be greater than check-in date");
+      }
+      const nights = (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24);
+      return room.price * nights;
+    }
+  } catch (error) {
+    console.error("Error calculating total price:", error);
+    throw error;
+  }
+};
+
 module.exports = {
   getBookings,
   getBooking,
   createBooking,
   updateBooking,
   deleteBooking,
+  calculateTotalPrice,
 };
