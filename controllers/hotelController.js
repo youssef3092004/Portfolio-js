@@ -52,7 +52,55 @@ const getHotel = async (req, res, next) => {
   }
 };
 
+const createHotel = async (req, res, next) => {
+  try {
+    const {
+      name,
+      property_type,
+      star_rating,
+      num_rooms,
+      images,
+      location,
+      review,
+    } = req.body;
+    const newHotel = new Hotel({
+      name,
+      property_type,
+      star_rating,
+      num_rooms,
+      images,
+      location,
+      review,
+    });
+    if (!name) {
+      res.status(404);
+      throw new Error("Name is required");
+    }
+    if (!star_rating) {
+      res.status(404);
+      throw new Error("Star Rating is required");
+    }
+    if (!num_rooms) {
+      res.status(404);
+      throw new Error("Number of Rooms is required");
+    }
+    if (!images) {
+      res.status(404);
+      throw new Error("Images are required");
+    }
+    if (!location) {
+      res.status(404);
+      throw new Error("Location is required");
+    }
+    const savedHotel = await newHotel.save();
+    res.status(200).json(savedHotel);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getHotels,
   getHotel,
+  createHotel,
 };
