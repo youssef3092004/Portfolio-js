@@ -52,6 +52,19 @@ const getHotel = async (req, res, next) => {
   }
 };
 
+/**
+ * @function createHotel
+ * @description Creates a new hotel and saves it to the database.
+ * @route POST /api/hotels
+ * @access Public
+ * @returns {JSON} JSON object representing the newly created hotel.
+ * @throws {Error} If any required field (name, star rating, number of rooms, images, location) is missing or if the database query fails.
+ * 
+ * This function accepts hotel details from the request body, validates the required fields, 
+ * creates a new hotel object, and saves it to the database. If any required fields are missing, 
+ * it responds with a 404 status code and an error message. Upon successful creation, it returns the 
+ * newly created hotel as a JSON object.
+ */
 const createHotel = async (req, res, next) => {
   try {
     const {
