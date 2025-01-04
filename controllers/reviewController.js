@@ -51,7 +51,51 @@ const getReview = async (req, res, next) => {
   }
 };
 
+/**
+ * @function createReview
+ * @description Creates a new review for a hotel.
+ * @route POST /api/reviews
+ * @access Private
+ * @returns {JSON} JSON object containing the newly created review.
+ * @throws {Error} If any required field is missing.
+ *
+ * This function validates the required fields and saves a new review
+ * to the database.
+ */
+const createReview = async (req, res, next) => {
+  try {
+    const { rating, description, user, hotel } = req.body;
+    const newReview = new Review({
+      rating,
+      description,
+      user,
+      hotel,
+    });
+    if (!rating) {
+      res.status(404);
+      throw new Error("Rating is required");
+    }
+    if (!description) {
+      res.status(404);
+      throw new Error("Description is required");
+    }
+    if (!user) {
+      res.status(404);
+      throw new Error("User is required");
+    }
+    if (!hotel) {
+      res.status(404);
+      throw new Error("Hotel is required");
+    }
+    const savedReview = await newReview.save();
+    res.status(201).json(savedReview);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getReviews,
   getReview,
+  createReview,
 };
