@@ -24,4 +24,23 @@ const getHotels = async (req, res, next) => {
   }
 };
 
-module.exports = { getHotels };
+const getHotel = async (req, res, next) => {
+  try {
+    const hotel = await Hotel.findById(req.params.id)
+      .populate("location")
+      .populate("rooms")
+      .populate("review");
+    if (!hotel) {
+      res.status(404);
+      throw new Error("There is no hotel by this ID");
+    }
+    res.status(200).json(hotel);
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getHotels,
+  getHotel,
+};
