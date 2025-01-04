@@ -24,7 +24,34 @@ const getPayments = async (req, res, next) => {
   }
 };
 
+/**
+ * @function getPayment
+ * @description Fetches a single payment by its ID, including populated user and booking details.
+ * @route GET /api/payments/:id
+ * @access Public
+ * @returns {JSON} JSON object of the payment with populated user and booking details.
+ * @throws {Error} If the payment with the specified ID is not found or if the database query fails.
+ * 
+ * This function retrieves a specific payment from the database based on its ID 
+ * and populates associated user and booking data. If the payment does not exist, it responds with a 404 error.
+ */
+const getPayment = async (req, res, next) => {
+    try {
+      const payment = await Payment.findById(req.params.id)
+        .populate("user")
+        .populate("booking");
+      if (!payment) {
+        res.status(404);
+        throw new Error("There is no payment by this ID");
+      }
+      return res.status(200).json(payment);
+    } catch (error) {
+      next(error);
+    }
+  };
+  
 
 module.exports = {
     getPayments,
+    getPayment,
 };
