@@ -155,6 +155,18 @@ const updateHotel = async (req, res, next) => {
   }
 };
 
+/**
+ * @function deleteHotel
+ * @description Deletes a hotel from the database based on the provided ID.
+ * @route DELETE /api/hotels/:id
+ * @access Public
+ * @returns {JSON} JSON object of the deleted hotel.
+ * @throws {Error} If no hotel is found with the provided ID.
+ * 
+ * This function accepts a hotel ID as a URL parameter, deletes the corresponding hotel document 
+ * from the database, and returns the deleted hotel as a JSON object. If no hotel is found 
+ * with the provided ID, it responds with a 404 status code and an error message.
+ */
 const deleteHotel = async (req, res, next) => {
   try {
     const hotel = await Hotel.findByIdAndDelete(req.params.id);
