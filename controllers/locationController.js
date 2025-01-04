@@ -80,7 +80,24 @@ const createLocation = async (req, res, next) => {
       res.status(404);
       throw new Error("Country is required");
     }
-  };
+    if (!city) {
+      res.status(404);
+      throw new Error("City is required");
+    }
+    if (!address) {
+      res.status(404);
+      throw new Error("Address is required");
+    }
+    if (!zip_code) {
+      res.status(404);
+      throw new Error("Zip Code is required");
+    }
+    const savedLocation = await newLocation.save();
+    return res.status(200).json(savedLocation);
+  } catch (error) {
+    next(error);
+  }
+};
   
   /**
  * @function updateLocation
@@ -139,9 +156,35 @@ const updateLocation = async (req, res, next) => {
   }
 };
 
-  module.exports = {
-    getLocations,
-    getLocation,
-    createLocation,
-    updateLocation,
-  };
+/**
+ * @function deleteLocation
+ * @description Deletes a location from the database by its ID.
+ * @route DELETE /api/locations/:id
+ * @access Public
+ * @returns {JSON} JSON object representing the deleted location.
+ * @throws {Error} If the location is not found by the given ID.
+ * 
+ * This function deletes the location with the specified ID. If no location is found by that ID, 
+ * it responds with a 404 error. Upon successful deletion, the deleted location is returned.
+ */
+const deleteLocation = async (req, res, next) => {
+  try {
+    const location = await Location.findByIdAndDelete(req.params.id);
+    if (!location) {
+      res.status(404);
+      throw new Error("There is no location by this ID");
+    }
+    return res.status(200).json(location);
+  } catch (error) {
+    next(error);
+  }
+};
+
+  
+module.exports = {
+  getLocations,
+  getLocation,
+  createLocation,
+  updateLocation,
+  deleteLocation,
+};
