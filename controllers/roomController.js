@@ -105,8 +105,52 @@ const createRoom = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updateRoom
+ * @description Updates an existing room's details in the database.
+ * @route PUT /api/rooms/:id
+ * @access Private
+ * @returns {JSON} JSON object containing the updated room details.
+ * @throws {Error} If no fields are provided for update or if the room is not found.
+ *
+ * This function checks for provided fields and updates the corresponding room details in the database.
+ * If no fields are provided, an error is thrown. The room is then updated and returned in the response.
+ */
+const updateRoom = async (req, res, next) => {
+  try {
+    const { room_type, room_number, price, status, hotel, amenities } =
+      req.body;
+    const updateField = {};
+    if (room_type) updateField.room_type = room_type;
+    if (room_number) updateField.room_number = room_number;
+    if (price) updateField.room_number = price;
+    if (status) updateField.status = status;
+    if (hotel) updateField.hotel = hotel;
+    if (amenities) updateField.amenities = amenities;
+    if (Object.keys(updateField).length === 0) {
+      res.status(404);
+      throw new Error("No fields provided for update");
+    }
+
+    const room = await Room.findByIdAndUpdate(
+      updateField,
+      { $set: updateField },
+      { new: true }
+    );
+    if (!room) {
+      res.status(404);
+      throw new Error("Cannot Update The User");
+    }
+    res.status(200).json(room);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 module.exports = {
   getRooms,
   getRoom,
   createRoom,
+  updateRoom,
 };
