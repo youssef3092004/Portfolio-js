@@ -112,6 +112,18 @@ const createHotel = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updateHotel
+ * @description Updates an existing hotel's details in the database based on the provided ID and fields.
+ * @route PUT /api/hotels/:id
+ * @access Public
+ * @returns {JSON} JSON object representing the updated hotel.
+ * @throws {Error} If no hotel is found with the provided ID or if no fields are provided for updating.
+ * 
+ * This function accepts updated hotel details in the request body and updates the corresponding hotel 
+ * document in the database using the provided hotel ID. If no fields are provided to update, it responds 
+ * with a 400 status code and an error message. Upon successful update, it returns the updated hotel as a JSON object.
+ */
 const updateHotel = async (req, res, next) => {
   try {
     const { name, property_type, star_rating, num_rooms, images, location } =
