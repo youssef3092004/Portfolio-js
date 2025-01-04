@@ -135,9 +135,34 @@ const updatePayment = async (req, res, next) => {
   }
 };
 
+/**
+ * @function deletePayment
+ * @description Deletes a payment entry from the database by ID.
+ * @route DELETE /api/payments/:id
+ * @access Public
+ * @returns {JSON} JSON object of the deleted payment.
+ * @throws {Error} If the payment ID does not exist.
+ *
+ * This function removes a payment record based on the provided payment ID.
+ * If no payment with the given ID exists, it returns an error.
+ */
+const deletePayment = async (req, res, next) => {
+  try {
+    const payment = await Payment.findByIdAndDelete(req.params.id);
+    if (!payment) {
+      res.status(400);
+      throw new Error("no payment with this id" + req.params.id);
+    }
+    res.status(200).json(payment);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
     getPayments,
     getPayment,
     createPayment,
     updatePayment,
+    deletePayment,
 };
