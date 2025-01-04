@@ -24,5 +24,33 @@ const getLocations = async (req, res, next) => {
   }
 };
 
-
-module.exports = { getLocations };
+/**
+ * @function getLocation
+ * @description Fetches a single location from the database by its ID.
+ * @route GET /api/locations/:id
+ * @access Public
+ * @param {string} id - The ID of the location to fetch from the database.
+ * @returns {JSON} A JSON object representing the location.
+ * @throws {Error} If no location is found for the provided ID or if the database query fails.
+ * 
+ * This function queries the database for a location by its unique ID provided in the request parameters. 
+ * If the location is found, it returns the location data as a JSON object. 
+ * If no location is found, it responds with a 404 status code and an error message.
+ */
+const getLocation = async (req, res, next) => {
+    try {
+      const location = await Location.findById(req.params.id);
+      if (!location) {
+        res.status(404);
+        throw new Error("There is no location by this ID");
+      }
+      return res.status(200).json(location);
+    } catch (error) {
+      next(error);
+    }
+  };
+  
+  module.exports = {
+    getLocations,
+    getLocation,
+  };
