@@ -148,9 +148,36 @@ const updateRoom = async (req, res, next) => {
 };
 
 
+/**
+ * @function deleteRoom
+ * @description Deletes a room from the database by its ID.
+ * @route DELETE /api/rooms/:id
+ * @access Private
+ * @param {string} id - The ID of the room to delete.
+ * @returns {JSON} JSON message indicating the deletion success.
+ * @throws {Error} If no room is found by the given ID.
+ *
+ * This function attempts to delete the room with the given ID. 
+ * If no room is found, it returns an error. If successful, it responds 
+ * with a success message indicating the room was deleted.
+ */
+const deleteRoom = async (req, res, next) => {
+  try {
+    const room = await Room.findByIdAndDelete(req.params.id);
+    if (!room) {
+      res.status(404);
+      throw new Error("No Room with This ID");
+    }
+    res.status(200).json("the room has been deleted Successfuly");
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getRooms,
   getRoom,
   createRoom,
   updateRoom,
+  deleteRoom,
 };
