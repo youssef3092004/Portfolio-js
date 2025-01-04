@@ -155,9 +155,24 @@ const updateHotel = async (req, res, next) => {
   }
 };
 
+const deleteHotel = async (req, res, next) => {
+  try {
+    const hotel = await Hotel.findByIdAndDelete(req.params.id);
+    if (!hotel) {
+      res.status(404);
+      throw new Error("There is no hotel by this ID");
+    }
+    res.status(200).json(hotel);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
 module.exports = {
   getHotels,
   getHotel,
   createHotel,
   updateHotel,
+  deleteHotel,
 };
