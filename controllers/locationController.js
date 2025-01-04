@@ -38,17 +38,17 @@ const getLocations = async (req, res, next) => {
  * If no location is found, it responds with a 404 status code and an error message.
  */
 const getLocation = async (req, res, next) => {
-    try {
-      const location = await Location.findById(req.params.id);
-      if (!location) {
-        res.status(404);
-        throw new Error("There is no location by this ID");
-      }
-      return res.status(200).json(location);
-    } catch (error) {
-      next(error);
+  try {
+    const location = await Location.findById(req.params.id);
+    if (!location) {
+      res.status(404);
+      throw new Error("There is no location by this ID");
     }
-  };
+    return res.status(200).json(location);
+  } catch (error) {
+    next(error);
+  }
+};
   
   module.exports = {
     getLocations,
