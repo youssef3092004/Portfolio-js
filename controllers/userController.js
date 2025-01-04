@@ -169,9 +169,35 @@ const updateUser = async (req, res, next) => {
   }
 };
 
+/**
+ * @function deleteUser
+ * @description deletes an existing user from the database based on the user ID.
+ * @route DELETE /api/users/:id
+ * @access Private
+ * @param {string} req.params.id - The ID of the user to be deleted.
+ * @returns {JSON} JSON object containing a success message upon successful deletion.
+ * @throws {Error} If the user does not exist or cannot be deleted.
+ *
+ * This function deletes a user from the database based on the provided user ID.
+ * If the user with the specified ID does not exist, an error is thrown.
+ */
+const deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      res.status(400);
+      throw new Error("no user with this id" + req.params.id);
+    }
+    res.status(200).json({ msg: "the user has been deleted Successfuly" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUser,
   createUser,
   updateUser,
+  deleteUser,
 };
