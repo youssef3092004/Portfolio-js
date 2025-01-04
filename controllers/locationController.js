@@ -68,37 +68,37 @@ const getLocation = async (req, res, next) => {
  * as a JSON object. If any required field is missing, it responds with a 404 status code and an error message.
  */
 const createLocation = async (req, res, next) => {
-    try {
-      const { country, city, address, zip_code } = req.body;
-      const newLocation = new Location({
-        country,
-        city,
-        address,
-        zip_code,
-      });
-      if (!country) {
-        res.status(404);
-        throw new Error("Country is required");
-      }
-      if (!city) {
-        res.status(404);
-        throw new Error("City is required");
-      }
-      if (!address) {
-        res.status(404);
-        throw new Error("Address is required");
-      }
-      if (!zip_code) {
-        res.status(404);
-        throw new Error("Zip Code is required");
-      }
-      const savedLocation = await newLocation.save();
-      return res.status(200).json(savedLocation);
-    } catch (error) {
-      next(error);
+  try {
+    const { country, city, address, zip_code } = req.body;
+    const newLocation = new Location({
+      country,
+      city,
+      address,
+      zip_code,
+    });
+    if (!country) {
+      res.status(404);
+      throw new Error("Country is required");
     }
-  };
-  
+    if (!city) {
+      res.status(404);
+      throw new Error("City is required");
+    }
+    if (!address) {
+      res.status(404);
+      throw new Error("Address is required");
+    }
+    if (!zip_code) {
+      res.status(404);
+      throw new Error("Zip Code is required");
+    }
+    const savedLocation = await newLocation.save();
+    return res.status(200).json(savedLocation);
+  } catch (error) {
+    next(error);
+  }
+};
+
   
   module.exports = {
     getLocations,
