@@ -50,7 +50,58 @@ const getLocation = async (req, res, next) => {
   }
 };
   
+  /**
+ * @function createLocation
+ * @description Creates a new location in the database.
+ * @route POST /api/locations
+ * @access Public
+ * @param {Object} req.body - The request body containing the location details.
+ * @param {string} req.body.country - The country of the location.
+ * @param {string} req.body.city - The city of the location.
+ * @param {string} req.body.address - The address of the location.
+ * @param {string} req.body.zip_code - The zip code of the location.
+ * @returns {JSON} A JSON object representing the newly created location.
+ * @throws {Error} If any required field is missing or if the database query fails.
+ * 
+ * This function receives location data from the request body, validates that all required fields are present, 
+ * creates a new location document, and saves it to the database. If successful, it returns the saved location 
+ * as a JSON object. If any required field is missing, it responds with a 404 status code and an error message.
+ */
+const createLocation = async (req, res, next) => {
+  try {
+    const { country, city, address, zip_code } = req.body;
+    const newLocation = new Location({
+      country,
+      city,
+      address,
+      zip_code,
+    });
+    if (!country) {
+      res.status(404);
+      throw new Error("Country is required");
+    }
+    if (!city) {
+      res.status(404);
+      throw new Error("City is required");
+    }
+    if (!address) {
+      res.status(404);
+      throw new Error("Address is required");
+    }
+    if (!zip_code) {
+      res.status(404);
+      throw new Error("Zip Code is required");
+    }
+    const savedLocation = await newLocation.save();
+    return res.status(200).json(savedLocation);
+  } catch (error) {
+    next(error);
+  }
+};
+
+  
   module.exports = {
     getLocations,
     getLocation,
+    createLocation,
   };
