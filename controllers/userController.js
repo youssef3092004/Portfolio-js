@@ -25,6 +25,33 @@ const getUsers = async (req, res, next) => {
   }
 };
 
+/**
+ * @function getUser
+ * @description Fetches a specific user by their ID.
+ * @route GET /api/users/:id
+ * @access Public
+ * @param {string} id - The ID of the user to fetch.
+ * @returns {JSON} JSON object containing the user's data.
+ * @throws {Error} If no user is found by the provided ID.
+ *
+ * This function retrieves a user from the database by their ID.
+ * If the user is found, the user's data is returned in the response.
+ * If no user is found, an error message is thrown.
+ */
+const getUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(res.params.id);
+    if (!user) {
+      res.status(404);
+      throw new Error("There are no users available");
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
-    getUsers,
-  };
+  getUsers,
+  getUser,
+};
