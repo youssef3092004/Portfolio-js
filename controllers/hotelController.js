@@ -112,8 +112,40 @@ const createHotel = async (req, res, next) => {
   }
 };
 
+const updateHotel = async (req, res, next) => {
+  try {
+    const { name, property_type, star_rating, num_rooms, images, location } =
+      req.body;
+    const updateField = {};
+
+    if (name) updateField.name = name;
+    if (property_type) updateField.property_type = property_type;
+    if (star_rating) updateField.star_rating = star_rating;
+    if (num_rooms) updateField.num_rooms = num_rooms;
+    if (images) updateField.images = images;
+    if (location) updateField.location;
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("Please provide fields to update");
+    }
+    const hotel = await Hotel.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateField },
+      { new: true }
+    );
+    if (!hotel) {
+      res.status(404);
+      throw new Error("There is no hotel by this ID");
+    }
+    return res.status(200).json(hotel);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getHotels,
   getHotel,
   createHotel,
+  updateHotel,
 };
