@@ -94,8 +94,50 @@ const createPayment = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updatePayment
+ * @description Updates an existing payment entry in the database.
+ * @route PUT /api/payments/:id
+ * @access Public
+ * @returns {JSON} JSON object of the updated payment.
+ * @throws {Error} If no fields are provided for update or if the payment is not found.
+ * 
+ * This function updates the specified fields of a payment record based on the provided
+ * request body. If no valid fields are provided or if the payment ID does not exist,
+ * it returns an appropriate error.
+ */
+const updatePayment = async (req, res, next) => {
+  try {
+    const { payment_mathond, status, user, booking } = req.body;
+    const updateField = {};
+
+    if (payment_mathond) updateField.payment_mathond = payment_mathond;
+    if (status) updateField.status = status;
+    if (user) updateField.user = user;
+    if (booking) updateField.booking = booking;
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("No fields provided for update");
+    }
+
+    const payment = await Payment.findByIdAndUpdate(
+      req.updateField,
+      { $set: updateField },
+      { new: true }
+    );
+    if (!payment) {
+      res.status(400);
+      throw new Error("no payment with this id" + req.params.id);
+    }
+    res.status(200).json(payment);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
     getPayments,
     getPayment,
     createPayment,
+    updatePayment,
 };
