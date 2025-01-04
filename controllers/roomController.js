@@ -51,7 +51,62 @@ const getRoom = async (req, res, next) => {
   }
 };
 
+/**
+ * @function createRoom
+ * @description Creates a new room in the database.
+ * @route POST /api/rooms
+ * @access Private
+ * @returns {JSON} JSON object containing the newly created room.
+ * @throws {Error} If any required field is missing.
+ *
+ * This function validates the required fields (room type, number, price, status, hotel, and amenities)
+ * and saves a new room to the database. If any field is missing, an error is thrown with the appropriate message.
+ */
+const createRoom = async (req, res, next) => {
+  try {
+    const { room_type, room_number, price, status, hotel, amenities } =
+      req.body;
+    const newRoom = new Room({
+      room_type,
+      room_number,
+      price,
+      status,
+      hotel,
+      amenities,
+    });
+    if (!room_type) {
+      res.status(404);
+      throw new Error("Room Type is required");
+    }
+    if (!room_number) {
+      res.status(404);
+      throw new Error("Room Number is required");
+    }
+    if (!price) {
+      res.status(404);
+      throw new Error("Price is required");
+    }
+    if (!status) {
+      res.status(404);
+      throw new Error("Status is required");
+    }
+    if (!hotel) {
+      res.status(404);
+      throw new Error("Hotel is required");
+    }
+    if (!amenities) {
+      res.status(404);
+      throw new Error("Amenities is required");
+    }
+    const savedRoom = await newRoom.save();
+    res.status(201).json(savedRoom);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getRooms,
   getRoom,
+  createRoom,
 };
