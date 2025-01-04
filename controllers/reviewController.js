@@ -94,8 +94,75 @@ const createReview = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updateReview
+ * @description Updates an existing review for a hotel.
+ * @route PUT /api/reviews/:id
+ * @access Private
+ * @returns {JSON} - JSON object containing the updated review.
+ * @throws {Error} - If no fields are provided for update or if the review is not found.
+ *
+ * This function validates the provided fields, updates the review in the database,
+ * and returns the updated review as a response.
+ */
+const updateReview = async (req, res, next) => {
+  try {
+    const { rating, description, user, hotel } = req.body;
+    const updateField = {};
+
+    if (rating) updateField.rating = rating;
+    if (description) updateField.description = description;
+    if (user) updateField.user = user;
+    if (hotel) updateField.hotel = hotel;
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("No fields provided for update");
+    }
+
+    const review = await Review.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateField },
+      { new: true }
+    );
+    if (!review) {
+      res.status(404);
+      throw new Error("Cannot Update The Review");
+    }
+    res.status(200).json(review);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @function deleteReview
+ * @description Deletes an existing review for a hotel.
+ * @route DELETE /api/reviews/:id
+ * @access Private
+ * @param {string} req.params.id - The ID of the review to be deleted (required).
+ * @returns {JSON} - JSON object containing the deleted review.
+ * @throws {Error} - If the review is not found or cannot be deleted.
+ *
+ * This function attempts to delete the specified review from the database.
+ * If the review is not found, it throws an error.
+ */
+const deleteReview = async (req, res, next) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+    if (!review) {
+      res.status(404);
+      throw new Error("Cannot Delete The Review");
+    }
+    res.status(200).json(review);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getReviews,
   getReview,
   createReview,
+  updateReview,
+  deleteReview,
 };
