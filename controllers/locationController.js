@@ -80,6 +80,45 @@ const createLocation = async (req, res, next) => {
       res.status(404);
       throw new Error("Country is required");
     }
+  };
+  
+  /**
+ * @function updateLocation
+ * @description Updates an existing location in the database.
+ * @route PUT /api/locations/:id
+ * @access Public
+ * @returns {JSON} JSON object representing the updated location.
+ * @throws {Error} If no fields are provided for update or if the location is not found.
+ * 
+ * This function updates the location with the specified ID by modifying the fields provided in the request body.
+ * If no fields are provided, it responds with an error. If the location is not found, it returns a 404 error.
+ */
+const updateLocation = async (req, res, next) => {
+  try {
+    const { country, city, address, zip_code } = req.body;
+    const updateField = {};
+
+    if (country) updateField.country = country;
+    if (city) updateField.city = city;
+    if (address) updateField.address = address;
+    if (zip_code) updateField.zip_code = zip_code;
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("Please provide fields to update");
+    }
+
+    const location = await Location.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: updateField,
+      },
+      { new: true }
+    );
+    if (!location) {
+      res.status(404);
+      throw new Error("There is no location by this ID");
+    }
+    return res.status(200).json(location);
     if (!city) {
       res.status(404);
       throw new Error("City is required");
@@ -94,14 +133,15 @@ const createLocation = async (req, res, next) => {
     }
     const savedLocation = await newLocation.save();
     return res.status(200).json(savedLocation);
+
   } catch (error) {
     next(error);
   }
 };
 
-  
   module.exports = {
     getLocations,
     getLocation,
     createLocation,
+    updateLocation,
   };
