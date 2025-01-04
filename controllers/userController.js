@@ -113,8 +113,65 @@ const createUser = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updateUser
+ * @description Updates an existing user in the database based on provided fields.
+ * @route PUT /api/users/:id
+ * @access Private
+ * @returns {JSON} JSON object containing the updated user.
+ * @throws {Error} If no fields are provided for update or if the user does not exist.
+ *
+ * This function validates the fields provided in the request body, hashes the new password
+ * if provided, and updates the user in the database with the new information. If no fields
+ * are provided for update or if the user is not found, it throws an error.
+ */
+const updateUser = async (req, res, next) => {
+  try {
+    const { username, fname, lname, address, phone, email, password } =
+      req.body;
+
+    const updateField = {};
+    if (username) {
+      updateField.username = username;
+    }
+    if (fname) {
+      updateField.fname = fname;
+    }
+    if (lname) {
+      updateField.lname = lname;
+    }
+    if (address) {
+      updateField.address = address;
+    }
+    if (phone) {
+      updateField.phone = phone;
+    }
+    if (email) {
+      updateField.email = email;
+    }
+    if (password) {
+      updateField.password = await bcrypt.hash(password, 10);
+    }
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("No fields provided for update");
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, updateField, {
+      new: true,
+    });
+    if (!user) {
+      res.status(400);
+      throw new Error("no user with this id" + req.params.id);
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUser,
   createUser,
+  updateUser,
 };
