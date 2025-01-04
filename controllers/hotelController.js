@@ -24,6 +24,18 @@ const getHotels = async (req, res, next) => {
   }
 };
 
+/**
+ * @function getHotel
+ * @description Fetches a single hotel by its ID from the database, including populated location, rooms, and review details.
+ * @route GET /api/hotels/:id
+ * @access Public
+ * @returns {JSON} JSON object representing a hotel with populated location, rooms, and review details.
+ * @throws {Error} If no hotel is found with the provided ID or if the database query fails.
+ * 
+ * This function queries the database for a single hotel document using the provided ID in the request parameters, 
+ * populates associated location, rooms, and review data, and returns it as a JSON object. If no hotel is found, 
+ * it responds with a 404 status code.
+ */
 const getHotel = async (req, res, next) => {
   try {
     const hotel = await Hotel.findById(req.params.id)
