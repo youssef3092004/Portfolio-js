@@ -1,5 +1,6 @@
-const User = require("../models/user");
+const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
+const { validatePassword, validatePhone, validateEmail } = require("../utils");
 
 /**
  * @function getUsers
@@ -41,73 +42,12 @@ const getUsers = async (req, res, next) => {
  */
 const getUser = async (req, res, next) => {
   try {
-    const user = await User.findById(res.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) {
       res.status(404);
       throw new Error("There are no users available");
     }
     return res.status(200).json(user);
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
- * @function createUser
- * @description Creates a new user in the database.
- * @route POST /api/users
- * @access Public
- * @returns {JSON} JSON object containing the newly created user.
- * @throws {Error} If any required field is missing or if there is a problem creating the user.
- *
- * This function validates the required fields, hashes the user's password, and saves
- * the new user to the database. It checks that all fields are provided, and if any
- * are missing, it throws an error.
- */
-const createUser = async (req, res, next) => {
-  try {
-    const { username, fname, lname, address, phone, email, password } =
-      req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      username,
-      fname,
-      lname,
-      address,
-      phone,
-      email,
-      password: hashedPassword,
-    });
-    if (!username) {
-      res.status(404);
-      throw new Error("Username is required");
-    }
-    if (!fname) {
-      res.status(404);
-      throw new Error("First Name is required");
-    }
-    if (!lname) {
-      res.status(404);
-      throw new Error("Last Name is required");
-    }
-    if (!address) {
-      res.status(404);
-      throw new Error("Address is required");
-    }
-    if (!phone) {
-      res.status(404);
-      throw new Error("Phone is required");
-    }
-    if (!email) {
-      res.status(404);
-      throw new Error("Email is required");
-    }
-    if (!password) {
-      res.status(404);
-      throw new Error("Password is required");
-    }
-    const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
   } catch (error) {
     next(error);
   }
@@ -144,13 +84,32 @@ const updateUser = async (req, res, next) => {
       updateField.address = address;
     }
     if (phone) {
+      if (!validatePhone(phone)) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid phone number. It should be between 10 and 15 digits.",
+        });
+      }
       updateField.phone = phone;
     }
     if (email) {
+      // Validate email
+      if (!validateEmail(email)) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid email format.",
+        });
+      }
       updateField.email = email;
     }
     if (password) {
-      updateField.password = await bcrypt.hash(password, 10);
+      // Validate password
+      if (!validatePassword(password)) {
+        return res.status(400).send({
+          success: false,
+          message: "Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.",
+        });
+      }
     }
     if (Object.keys(updateField).length === 0) {
       res.status(400);
@@ -194,10 +153,80 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updatePassword
+ * @description Updates the user's password after verifying the current password.
+ * @route POST /api/users/updatePassword
+ * @access Private
+ * @middleware authMiddleware
+ * @param {string} req.user.id - The ID of the authenticated user extracted from the token.
+ * @param {string} req.body.currentPassword - The user's current password.
+ * @param {string} req.body.newPassword - The new password to replace the current one.
+ * @returns {JSON} JSON object containing a success message upon successful password update.
+ * @throws {Error} If the user is not found, the current password is incorrect, or any server error occurs.
+ *
+ * This function verifies the user's current password, hashes the new password, and updates it in the database.
+ * If the current password does not match, an error is returned.
+ */
+const updatePassword = async (req, res) => {
+  try {
+    console.log("User ID from token:", req.user.id);
+
+    // Fetch user by ID from the token
+    const user = await User.findById({_id: req.user.id});
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+    const {currentPassword, newPassword} = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).send({
+        success: false,
+        message: "Please provide current password and new password",
+      });
+    }
+
+    if (!validatePassword(newPassword)) {
+      return res.status(400).send({
+        success: false,
+        message: "New password must be at least 6 characters long, include a number, and a special character"
+      });
+    }
+    
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).send({
+        success: false,
+        error: "Current password is incorrect!",
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;  
+    await user.save();
+
+    res.status(200).send({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch(error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "An error occurred while updating the password",
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUser,
-  createUser,
   updateUser,
   deleteUser,
+  updatePassword,
 };
