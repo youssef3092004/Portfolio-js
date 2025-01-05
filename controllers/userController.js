@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
+const { validatePassword, validatePhone, validateEmail } = require("../utils");
 
 /**
  * @function getUsers
@@ -83,13 +84,32 @@ const updateUser = async (req, res, next) => {
       updateField.address = address;
     }
     if (phone) {
+      if (!validatePhone(phone)) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid phone number. It should be between 10 and 15 digits.",
+        });
+      }
       updateField.phone = phone;
     }
     if (email) {
+      // Validate email
+      if (!validateEmail(email)) {
+        return res.status(400).send({
+          success: false,
+          message: "Invalid email format.",
+        });
+      }
       updateField.email = email;
     }
     if (password) {
-      updateField.password = await bcrypt.hash(password, 10);
+      // Validate password
+      if (!validatePassword(password)) {
+        return res.status(400).send({
+          success: false,
+          message: "Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.",
+        });
+      }
     }
     if (Object.keys(updateField).length === 0) {
       res.status(400);
