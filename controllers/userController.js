@@ -153,9 +153,80 @@ const deleteUser = async (req, res, next) => {
   }
 };
 
+/**
+ * @function updatePassword
+ * @description Updates the user's password after verifying the current password.
+ * @route POST /api/users/updatePassword
+ * @access Private
+ * @middleware authMiddleware
+ * @param {string} req.user.id - The ID of the authenticated user extracted from the token.
+ * @param {string} req.body.currentPassword - The user's current password.
+ * @param {string} req.body.newPassword - The new password to replace the current one.
+ * @returns {JSON} JSON object containing a success message upon successful password update.
+ * @throws {Error} If the user is not found, the current password is incorrect, or any server error occurs.
+ *
+ * This function verifies the user's current password, hashes the new password, and updates it in the database.
+ * If the current password does not match, an error is returned.
+ */
+const updatePassword = async (req, res) => {
+  try {
+    console.log("User ID from token:", req.user.id);
+
+    // Fetch user by ID from the token
+    const user = await User.findById({_id: req.user.id});
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+    const {currentPassword, newPassword} = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).send({
+        success: false,
+        message: "Please provide current password and new password",
+      });
+    }
+
+    if (!validatePassword(newPassword)) {
+      return res.status(400).send({
+        success: false,
+        message: "New password must be at least 6 characters long, include a number, and a special character"
+      });
+    }
+    
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).send({
+        success: false,
+        error: "Current password is incorrect!",
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.password = hashedPassword;  
+    await user.save();
+
+    res.status(200).send({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch(error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "An error occurred while updating the password",
+    });
+  }
+};
+
 module.exports = {
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  updatePassword,
 };
