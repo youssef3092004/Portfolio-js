@@ -15,6 +15,7 @@ const {
   getUser,
   updateUser,
   deleteUser,
+  updatePassword,
 } = require("../controllers/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -27,6 +28,7 @@ const router = Router();
  * @returns {Array} List of all users.
  */
 router.get("/", authMiddleware, getUsers);
+
 /**
  * @route GET /api/users/:id
  * @desc Retrieve a specific user by their ID.
@@ -54,5 +56,16 @@ router.put("/:id", authMiddleware, updateUser);
  * @returns {Object} A message indicating the user has been deleted.
  */
 router.delete("/:id", authMiddleware, deleteUser);
+
+/**
+ * @route POST /api/users/updatePassword
+ * @desc Update the user's password after verification.
+ * @access Private
+ * @middleware authMiddleware
+ * @param {string} currentPassword - The user's current password.
+ * @param {string} newPassword - The new password for the user.
+ * @returns {Object} A message indicating the password has been successfully updated.
+ */
+router.post("/updatePassword", authMiddleware, updatePassword);
 
 module.exports = router;
