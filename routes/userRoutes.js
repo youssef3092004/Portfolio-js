@@ -13,10 +13,10 @@ const { Router } = require("express");
 const {
   getUsers,
   getUser,
-  createUser,
   updateUser,
   deleteUser,
 } = require("../controllers/userController");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = Router();
 
@@ -26,8 +26,7 @@ const router = Router();
  * @access Public
  * @returns {Array} List of all users.
  */
-router.get("/", getUsers);
-
+router.get("/", authMiddleware, getUsers);
 /**
  * @route GET /api/users/:id
  * @desc Retrieve a specific user by their ID.
@@ -35,23 +34,7 @@ router.get("/", getUsers);
  * @param {string} id - The unique identifier for the user.
  * @returns {Object} The user corresponding to the provided ID.
  */
-router.get("/:id", getUser);
-
-/**
- * @route POST /api/users
- * @desc Create a new user with provided details.
- * @access Public
- * @param {Object} userDetails - The details of the user.
- * @param {string} userDetails.username - The username of the user.
- * @param {string} userDetails.fname - The first name of the user.
- * @param {string} userDetails.lname - The last name of the user.
- * @param {string} userDetails.address - The address of the user.
- * @param {string} userDetails.phone - The phone number of the user.
- * @param {string} userDetails.email - The email address of the user.
- * @param {string} userDetails.password - The password of the user.
- * @returns {Object} The newly created user.
- */
-router.post("/", createUser);
+router.get("/:id", authMiddleware, getUser);
 
 /**
  * @route PUT /api/users/:id
@@ -61,7 +44,7 @@ router.post("/", createUser);
  * @param {Object} updatedUser - The updated user details.
  * @returns {Object} The updated user.
  */
-router.put("/:id", updateUser);
+router.put("/:id", authMiddleware, updateUser);
 
 /**
  * @route DELETE /api/users/:id
@@ -70,6 +53,6 @@ router.put("/:id", updateUser);
  * @param {string} id - The unique identifier for the user.
  * @returns {Object} A message indicating the user has been deleted.
  */
-router.delete("/:id", deleteUser);
+router.delete("/:id", authMiddleware, deleteUser);
 
 module.exports = router;
