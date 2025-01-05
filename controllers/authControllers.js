@@ -1,5 +1,7 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
+const JWT = require('jsonwebtoken');
+
 const { validatePassword, validateEmail, validatePhone } = require('../utils');
 
 /**
@@ -79,6 +81,68 @@ const registerController = async (req, res, next) => {
   }
 };
 
+/**
+ * @function loginController
+ * @description Logs in an existing user by validating their email and password.
+ * @route POST /api/users/login
+ * @access Public
+ * @returns {JSON} A success message with a JWT token and user data if login is successful.
+ * @throws {Error} If the email or password is incorrect, or if the user doesn't exist.
+ *
+ * This function checks if the user exists in the database using the provided email and validates the password.
+ * If valid, it generates a JSON Web Token (JWT) for the user.
+ */
+const loginController = async (req, res, next) => {
+  try {
+    const { email, password } = req.body
+
+    const requiredFields = { email, password };
+    for (let i in requiredFields) {
+      if (!requiredFields[i]) {
+        res.status(400).json({
+          success: false,
+          error: `${i.charAt(0).toUpperCase() + i.slice(1)} is required`
+        });
+      }
+    }
+
+    const user = await User.findOne({email});
+    if (!user) {
+      return res.status(404).send({
+        sucess: false,
+        message: 'User not found!',
+      });
+    }
+
+    // Compare user password with hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).send({
+        success: false,
+        error: "Invalid Password",
+      });
+    }
+
+    // Generate a JSON Web Token (JWT)
+    const token = JWT.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+  
+    // Hide the password for security
+    user.password = undefined;
+
+    res.status(200).send({
+      success: true,
+      message: 'Successfully logged in',
+      token,
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerController,
+  loginController,
 };
