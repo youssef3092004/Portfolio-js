@@ -1,4 +1,4 @@
-const Hotel = require("../models/hotel");
+const Hotel = require("../models/hotelModel");
 
 /**
  * @function getHotels
