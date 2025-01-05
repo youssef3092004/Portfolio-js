@@ -142,7 +142,67 @@ const loginController = async (req, res, next) => {
   }
 };
 
+/**
+ * @function resetPassword
+ * @description Resets the user's password based on the provided email and new password.
+ * @route POST /api/users/resetPassword
+ * @access Public
+ * @param {string} req.body.email - The email of the user whose password is being reset.
+ * @param {string} req.body.newPassword - The new password to set for the user.
+ * @returns {JSON} JSON object containing a success message upon successful password reset.
+ * @throws {Error} If the user does not exist or there is an error while resetting the password.
+ *
+ * This function allows a user to reset their password by providing their email and a new password.
+ * If the email exists in the database, the password will be updated with the new hashed password.
+ */
+const  resetPassword = async (req, res) => {
+  try {
+      const {email, newPassword} = req.body;
+
+      if (!email || !newPassword) {
+        return res.status(400).send({
+          success: false,
+          message: "Please provide all fields"
+        });
+      }
+
+      if (!validatePassword(newPassword)) {
+        return res.status(400).send({
+          success: false,
+          message: "New password must be at least 6 characters long, include a number, and a special character"
+        });
+      }
+
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        return res.status(404).send({
+          success: false,
+          message: "User not found"
+        })
+      }
+      // Hash user password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      user.password = hashedPassword;
+      await user.save();
+
+      res.status(200).send({
+        success: true,
+        message: "Password reset successfully!",
+      });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Erorr in reset password API",
+      error
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
+  resetPassword,
 };
