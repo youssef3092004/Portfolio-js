@@ -1,4 +1,4 @@
-const Location = require("../models/location");
+const Location = require("../models/locationModel");
 
 /**
  * @function getLocations
@@ -136,21 +136,6 @@ const updateLocation = async (req, res, next) => {
       throw new Error("There is no location by this ID");
     }
     return res.status(200).json(location);
-    if (!city) {
-      res.status(404);
-      throw new Error("City is required");
-    }
-    if (!address) {
-      res.status(404);
-      throw new Error("Address is required");
-    }
-    if (!zip_code) {
-      res.status(404);
-      throw new Error("Zip Code is required");
-    }
-    const savedLocation = await newLocation.save();
-    return res.status(200).json(savedLocation);
-
   } catch (error) {
     next(error);
   }
