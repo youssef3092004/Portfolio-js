@@ -21,51 +21,147 @@ const {
 const router = Router();
 
 /**
- * @route GET /api/locations
- * @desc Retrieve a list of all locations.
- * @access Public
- * @returns {Array} List of all locations.
+ * @swagger
+ * /api/locations:
+ *   get:
+ *     summary: Retrieve a list of all locations
+ *     tags: [Locations]
+ *     description: Get a list of all available locations.
+ *     responses:
+ *       200:
+ *         description: A list of all locations.
+ *       500:
+ *         description: Internal server error.
  */
 router.get("/", getLocations);
 
 /**
- * @route GET /api/locations/:id
- * @desc Retrieve a specific location by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the location.
- * @returns {Object} The location corresponding to the provided ID.
+ * @swagger
+ * /api/locations/{id}:
+ *   get:
+ *     summary: Retrieve a specific location by its ID
+ *     tags: [Locations]
+ *     description: Get a specific location using its unique identifier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the location.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The location corresponding to the provided ID.
+ *       404:
+ *         description: Location not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.get("/:id", getLocation);
 
 /**
- * @route POST /api/locations
- * @desc Create a new location.
- * @access Public
- * @param {Object} locationDetails - The details of the location.
- * @param {string} locationDetails.name - The name of the location.
- * @param {string} locationDetails.description - The description of the location.
- * @param {string} locationDetails.city - The city where the location is situated.
- * @param {string} locationDetails.country - The country where the location is situated.
- * @returns {Object} The newly created location.
+ * @swagger
+ * /api/locations:
+ *   post:
+ *     summary: Create a new location
+ *     tags: [Locations]
+ *     description: Add a new location with the provided details.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - country
+ *               - city
+ *               - address
+ *               - zip_code
+ *             properties:
+ *               country:
+ *                 type: string
+ *                 description: The country of the location.
+ *               city:
+ *                 type: string
+ *                 description: The city of the location.
+ *               address:
+ *                 type: string
+ *                 description: The address of the location.
+ *               zip_code:
+ *                 type: string
+ *                 description: The postal or zip code of the location.
+ *     responses:
+ *       201:
+ *         description: The newly created location.
+ *       500:
+ *         description: Internal server error.
  */
 router.post("/", createLocation);
 
 /**
- * @route PUT /api/locations/:id
- * @desc Update an existing location by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the location.
- * @param {Object} updatedLocation - The updated location details.
- * @returns {Object} The updated location.
+ * @swagger
+ * /api/locations/{id}:
+ *   put:
+ *     summary: Update an existing location by its ID
+ *     tags: [Locations]
+ *     description: Update the details of an existing location using its unique ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the location.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               country:
+ *                 type: string
+ *                 description: The country of the location.
+ *               city:
+ *                 type: string
+ *                 description: The city of the location.
+ *               address:
+ *                 type: string
+ *                 description: The address of the location.
+ *               zip_code:
+ *                 type: string
+ *                 description: The postal or zip code of the location.
+ *     responses:
+ *       200:
+ *         description: The updated location.
+ *       404:
+ *         description: Location not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.put("/:id", updateLocation);
 
 /**
- * @route DELETE /api/locations/:id
- * @desc Delete a location by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the location.
- * @returns {Object} A message indicating the location has been deleted.
+ * @swagger
+ * /api/locations/{id}:
+ *   delete:
+ *     summary: Delete a location by its ID
+ *     tags: [Locations]
+ *     description: Delete a location using its unique identifier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the location.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A success message indicating the location has been deleted.
+ *       404:
+ *         description: Location not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.delete("/:id", deleteLocation);
 
