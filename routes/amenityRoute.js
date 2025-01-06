@@ -21,50 +21,145 @@ const {
 const router = Router();
 
 /**
- * @route GET /api/amenities
- * @desc Retrieve a list of all amenities.
- * @access Public
- * @returns {Array} List of all amenities.
+ * @swagger
+ * /api/amenities:
+ *   get:
+ *     summary: Retrieve a list of all amenities
+ *     tags: [Amenities]
+ *     description: Get a list of all amenities available.
+ *     responses:
+ *       200:
+ *         description: A list of all amenities.
+ *       500:
+ *         description: Internal server error.
  */
 router.get("/", getAmenities);
 
 /**
- * @route GET /api/amenities/:id
- * @desc Retrieve a specific amenity by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the amenity.
- * @returns {Object} The amenity corresponding to the provided ID.
+ * @swagger
+ * /api/amenities/{id}:
+ *   get:
+ *     summary: Retrieve a specific amenity by its ID
+ *     tags: [Amenities]
+ *     description: Get a specific amenity using its unique identifier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the amenity.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The amenity corresponding to the provided ID.
+ *       404:
+ *         description: Amenity not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.get("/:id", getAmenity);
 
 /**
- * @route POST /api/amenities
- * @desc Create a new amenity.
- * @access Public
- * @param {Object} amenityDetails - The details of the amenity.
- * @param {string} amenityDetails.name - The name of the amenity.
- * @param {string} amenityDetails.description - The description of the amenity.
- * @param {Array} amenityDetails.hotel_amenities - List of hotel amenities.
- * @returns {Object} The newly created amenity.
+ * @swagger
+ * /api/amenities:
+ *   post:
+ *     summary: Create a new amenity
+ *     tags: [Amenities]
+ *     description: Add a new amenity with the provided details.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *               - hotel_amenities
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The name of the amenity.
+ *               description:
+ *                 type: string
+ *                 description: The description of the amenity.
+ *               hotel_amenities:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of hotel amenities associated with this amenity.
+ *     responses:
+ *       201:
+ *         description: new amenity created.
+ *       500:
+ *         description: Internal server error.
+
  */
 router.post("/", createAmenity);
 
 /**
- * @route PUT /api/amenities/:id
- * @desc Update an existing amenity by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the amenity.
- * @param {Object} updatedAmenity - The updated amenity details.
- * @returns {Object} The updated amenity.
+ * @swagger
+ * /api/amenities/{id}:
+ *   put:
+ *     summary: Update an existing amenity by its ID
+ *     tags: [Amenities]
+ *     description: Update the details of an existing amenity using its unique ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the amenity.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The name of the amenity.
+ *               description:
+ *                 type: string
+ *                 description: The description of the amenity.
+ *               hotel_amenities:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: List of hotel amenities associated with this amenity.
+ *     responses:
+ *       200:
+ *         description: The updated amenity.
+ *       404:
+ *         description: Amenity not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.put("/:id", updateAmenity);
 
 /**
- * @route DELETE /api/amenities/:id
- * @desc Delete an amenity by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the amenity.
- * @returns {Object} A message indicating the amenity has been deleted.
+ * @swagger
+ * /api/amenities/{id}:
+ *   delete:
+ *     summary: Delete an amenity by its ID
+ *     tags: [Amenities]
+ *     description: Delete an amenity using its unique identifier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the amenity.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A success message indicating the amenity has been deleted.
+ *       404:
+ *         description: Amenity not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.delete("/:id", deleteAmenity);
 
