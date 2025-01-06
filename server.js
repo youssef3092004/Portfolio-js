@@ -14,6 +14,7 @@ const roomRoutes = require("./routes/roomRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
 const { updateDiscountStatuses } = require("./controllers/discountController");
+const { swaggerUi, swaggerDocs } = require("./config/swaggerConfig");
 const DB_PORT = process.env.DB_PORT || 3000;
 
 connectDB();
@@ -32,7 +33,8 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/auth", authRoutes)
+app.use("/api/auth", authRoutes);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.get("/", (req, res) => {
   res.send("now you in a Hello page");
@@ -51,5 +53,6 @@ corn.schedule("0 * * * *", () => {
 // }, 5000);
 
 app.listen(DB_PORT, () => {
-  console.log(`I' listening in port ${DB_PORT}`);
+  console.log(`Server is running on http://localhost:${DB_PORT}`);
+  console.log('Swagger Docs available at http://localhost:3000/api-docs')
 });
