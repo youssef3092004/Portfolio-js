@@ -59,6 +59,8 @@ const router = express.Router();
  *         description: Bad request. Missing or invalid data.
  *       409:
  *         description: User already exists.
+ *       500:
+ *         description: Internal server error.
  */
 router.post('/register', registerController);
 
@@ -93,6 +95,8 @@ router.post('/register', registerController);
  *         description: Bad request. Missing or invalid data.
  *       401:
  *         description: Unauthorized. Invalid email or password.
+ *       500:
+ *         description: Internal server error.
  */
 router.post('/login', loginController);
 
@@ -130,6 +134,8 @@ router.post('/login', loginController);
  *         description: Unauthorized. Missing or invalid token.
  *       404:
  *         description: User not found with the provided email.
+ *       500:
+ *         description: Internal server error.
  */
 router.post("/resetPassword", resetPassword);
 
