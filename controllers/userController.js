@@ -56,7 +56,7 @@ const getUser = async (req, res, next) => {
 /**
  * @function updateUser
  * @description Updates an existing user in the database based on provided fields.
- * @route PUT /api/users/:id
+ * @route PUT /api/users/updateUser/:id
  * @access Private
  * @returns {JSON} JSON object containing the updated user.
  * @throws {Error} If no fields are provided for update or if the user does not exist.
@@ -67,7 +67,7 @@ const getUser = async (req, res, next) => {
  */
 const updateUser = async (req, res, next) => {
   try {
-    const { username, fname, lname, address, phone, email, password } =
+    const { username, fname, lname, address, phone, email } =
       req.body;
 
     const updateField = {};
@@ -102,15 +102,7 @@ const updateUser = async (req, res, next) => {
       }
       updateField.email = email;
     }
-    if (password) {
-      // Validate password
-      if (!validatePassword(password)) {
-        return res.status(400).send({
-          success: false,
-          message: "Password must be at least 8 characters long and include one uppercase letter, one number, and one special character.",
-        });
-      }
-    }
+
     if (Object.keys(updateField).length === 0) {
       res.status(400);
       throw new Error("No fields provided for update");
@@ -156,7 +148,7 @@ const deleteUser = async (req, res, next) => {
 /**
  * @function updatePassword
  * @description Updates the user's password after verifying the current password.
- * @route POST /api/users/updatePassword
+ * @route PUT /api/users/updatePassword
  * @access Private
  * @middleware authMiddleware
  * @param {string} req.user.id - The ID of the authenticated user extracted from the token.

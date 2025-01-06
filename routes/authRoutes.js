@@ -8,37 +8,136 @@ const {
 const router = express.Router();
 
 /**
- * @route POST /api/auth/register
- * @desc Register a new user with provided details.
- * @access Public
- * @param {string} username - The user's unique username.
- * @param {string} fname - The user's first name.
- * @param {string} lname - The user's last name.
- * @param {string} address - The user's address.
- * @param {string} phone - The user's phone number.
- * @param {string} email - The user's email address.
- * @param {string} password - The user's password.
- * @returns {Object} A success message indicating registration is complete.
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     description: Register a new user with provided details.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - fname
+ *               - lname
+ *               - address
+ *               - phone
+ *               - email
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: The user's unique username.
+ *               fname:
+ *                 type: string
+ *                 description: The user's first name.
+ *               lname:
+ *                 type: string
+ *                 description: The user's last name.
+ *               address:
+ *                 type: string
+ *                 description: The user's address.
+ *               phone:
+ *                 type: string
+ *                 description: The user's phone number (10-15 digits).
+ *                 example: 0123456789
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The user's email address.
+ *               password:
+ *                 type: string
+ *                 description: The user's password (minimum 8 characters, one uppercase letter, one number, one special character).
+ *     responses:
+ *       200:
+ *         description: A success message indicating registration is complete.
+ *       400:
+ *         description: Bad request. Missing or invalid data.
+ *       409:
+ *         description: User already exists.
+ *       500:
+ *         description: Internal server error.
  */
 router.post('/register', registerController);
 
 /**
- * @route POST /api/auth/login
- * @desc Authenticate a user and return an access token.
- * @access Public
- * @param {string} email - The user's email address.
- * @param {string} password - The user's password.
- * @returns {Object} A success message and an authentication token.
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate a user and return an access token
+ *     tags: [Authentication]
+ *     description: Authenticate a user by their email and password, and return an access token.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The user's email address.
+ *               password:
+ *                 type: string
+ *                 description: The user's password.
+ *     responses:
+ *       200:
+ *         description: A success message with the authentication token.
+ *       400:
+ *         description: Bad request. Missing or invalid data.
+ *       401:
+ *         description: Unauthorized. Invalid email or password.
+ *       500:
+ *         description: Internal server error.
  */
 router.post('/login', loginController);
 
 /**
- * @route POST /api/users/resetPassword
- * @desc reset password with email.
- * @access Private
- * @middleware authMiddleware
- * @returns {Object} A message indicating that the password has been successfully reset.
+ * @swagger
+ * /api/auth/resetPassword:
+ *   post:
+ *     summary: Reset password with email
+ *     tags: [Authentication]
+ *     description: Allows a user to reset their password by providing their email address.
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The user's email address for password reset.
+ *               newPassword:
+ *                 type: string
+ *                 description: The new password for the user.
+ *     responses:
+ *       200:
+ *         description: A success message indicating the password has been successfully reset.
+ *       400:
+ *         description: Bad request. Missing or invalid email.
+ *       401:
+ *         description: Unauthorized. Missing or invalid token.
+ *       404:
+ *         description: User not found with the provided email.
+ *       500:
+ *         description: Internal server error.
  */
 router.post("/resetPassword", resetPassword);
+
 
 module.exports = router;
