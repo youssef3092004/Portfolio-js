@@ -21,49 +21,164 @@ const {
 const router = Router();
 
 /**
- * @route GET /api/discounts
- * @desc Retrieve a list of all discounts.
- * @access Public
- * @returns {Array} List of all discounts.
+ * @swagger
+ * /api/discounts:
+ *   get:
+ *     summary: Retrieve a list of all discounts
+ *     tags: [Discounts]
+ *     description: Get a list of all available discounts.
+ *     responses:
+ *       200:
+ *         description: A list of all discounts.
+ *       500:
+ *         description: Internal server error.
  */
 router.get("/", getDiscounts);
 
 /**
- * @route GET /api/discounts/:id
- * @desc Retrieve a specific discount by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the discount.
- * @returns {Object} The discount corresponding to the provided ID.
+ * @swagger
+ * /api/discounts/{id}:
+ *   get:
+ *     summary: Retrieve a specific discount by its ID
+ *     tags: [Discounts]
+ *     description: Get a specific discount using its unique identifier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the discount.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The discount corresponding to the provided ID.
+ *       404:
+ *         description: Discount not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.get("/:id", getDiscount);
 
 /**
- * @route POST /api/discounts
- * @desc Create a new discount.
- * @access Public
- * @param {string} code - The unique discount code.
- * @param {number} percentage - The percentage of discount.
- * @param {Date} valid_until - The expiry date of the discount.
- * @returns {Object} The newly created discount.
+ * @swagger
+ * /api/discounts:
+ *   post:
+ *     summary: Create a new discount
+ *     tags: [Discounts]
+ *     description: Add a new discount with the provided details.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *               - discount
+ *               - start_date
+ *               - end_date
+ *               - status
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: The unique discount code.
+ *               discount:
+ *                 type: number
+ *                 description: The percentage of the discount.
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The start date of the discount.
+ *               end_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The expiry date of the discount.
+ *               status:
+ *                 type: string
+ *                 description: The status of the discount (e.g., active, expired).
+ *               maxUse:
+ *                 type: number
+ *                 description: The maximum number of times the discount can be used.
+ *     responses:
+ *       201:
+ *         description: The newly created discount.
+ *       500:
+ *         description: Internal server error.
  */
 router.post("/", createDiscount);
 
 /**
- * @route PUT /api/discounts/:id
- * @desc Update an existing discount by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the discount.
- * @param {Object} updatedFields - The fields to update (e.g., code, percentage, valid_until).
- * @returns {Object} The updated discount.
+ * @swagger
+ * /api/discounts/{id}:
+ *   put:
+ *     summary: Update an existing discount by its ID
+ *     tags: [Discounts]
+ *     description: Update the details of an existing discount using its unique ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the discount.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: The unique discount code.
+ *               discount:
+ *                 type: number
+ *                 description: The percentage of the discount.
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The start date of the discount.
+ *               end_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The expiry date of the discount.
+ *               status:
+ *                 type: string
+ *                 description: The status of the discount (e.g., active, expired).
+ *               maxUse:
+ *                 type: number
+ *                 description: The maximum number of times the discount can be used.
+ *     responses:
+ *       200:
+ *         description: The updated discount.
+ *       404:
+ *         description: Discount not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.put("/:id", updateDiscount);
 
 /**
- * @route DELETE /api/discounts/:id
- * @desc Delete a discount by its ID.
- * @access Public
- * @param {string} id - The unique identifier for the discount.
- * @returns {Object} A message indicating the discount has been deleted.
+ * @swagger
+ * /api/discounts/{id}:
+ *   delete:
+ *     summary: Delete a discount by its ID
+ *     tags: [Discounts]
+ *     description: Delete a discount using its unique identifier.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The unique identifier of the discount.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A success message indicating the discount has been deleted.
+ *       404:
+ *         description: Discount not found with the provided ID.
+ *       500:
+ *         description: Internal server error.
  */
 router.delete("/:id", deleteDiscount);
 
