@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
     // Check for authorization header
     const authHeader = req.headers["authorization"];
     if (!authHeader) {
-      return res.status(400).send({
+      return res.status(401).send({
         success: false,
         message: "Authorization header is required.",
       });
@@ -19,7 +19,7 @@ module.exports = async (req, res, next) => {
     // Extract token from "Bearer <token>"
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(400).send({
+      return res.status(401).send({
         success: false,
         message: "Token is required.",
       });
