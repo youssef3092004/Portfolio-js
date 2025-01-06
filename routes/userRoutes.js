@@ -37,7 +37,8 @@ const router = Router();
  *         description: Unauthorized. Missing or invalid token.
  *       404:
  *         description: User not found.
- * 
+ *       500:
+ *         description: Internal server error.
  * @route GET /api/users
  * @desc Retrieve a list of all users.
  * @access Public
@@ -68,7 +69,8 @@ router.get("/", authMiddleware, getUsers);
  *         description: Unauthorized. Missing or invalid token.
  *       404:
  *         description: User not found.
- * 
+ *       500:
+ *         description: Internal server error.
  * @route GET /api/users/:id
  * @desc Retrieve a specific user by their ID.
  * @access Public
@@ -135,7 +137,8 @@ router.get("/:id", authMiddleware, getUser);
  *         description: Unauthorized. Missing or invalid token.
  *       404:
  *         description: User not found.
- *
+ *       500:
+ *         description: Internal server error.
  * @route PUT /api/users/updateUser/:id
  * @desc Update an existing user by their ID.
  * @access Public
@@ -209,7 +212,9 @@ router.delete("/:id", authMiddleware, deleteUser);
  *         description: Invalid input or missing required fields.
  *       401:
  *         description: Unauthorized. Missing or invalid token.
- * 
+ *       500:
+ *         description: Internal Server Error.
+ *
  * @route PUT /api/users/updatePassword
  * @desc Update the user's password after verification.
  * @access Private
