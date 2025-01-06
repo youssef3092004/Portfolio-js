@@ -27,6 +27,8 @@
     "mongoose": "^8.9.3",
     "node-cron": "^3.0.3",
     "nvm": "^0.0.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "uuid": "^11.0.3"
   },
   "devDependencies": {
