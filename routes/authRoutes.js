@@ -51,7 +51,7 @@ const router = express.Router();
  *                 description: The user's email address.
  *               password:
  *                 type: string
- *                 description: The user's password (minimum 8 characters, one uppercase letter, one number, one special character).
+ *                 description: The user's password (minimum 6 characters long, include a number, and a special character).
  *     responses:
  *       200:
  *         description: A success message indicating registration is complete.
