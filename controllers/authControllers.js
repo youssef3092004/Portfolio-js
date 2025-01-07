@@ -59,7 +59,7 @@ const registerController = async (req, res, next) => {
 
     const existingUser = await User.findOne({email});
     if (existingUser) {
-      return res.status(400).send({
+      return res.status(409).send({
         success: false,
         message: 'Email already registered, please login!'
       });
