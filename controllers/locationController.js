@@ -14,7 +14,7 @@ const Location = require("../models/locationModel");
 const getLocations = async (req, res, next) => {
   try {
     const locations = await Location.find();
-    if (!locations) {
+    if (!locations || locations.length === 0) {
       res.status(404);
       throw new Error("There are no locations available");
     }
