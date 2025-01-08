@@ -3,6 +3,23 @@ const Booking = require("../models/bookingModel");
 const Hotel = require("../models/hotelModel");
 require("dotenv").config();
 
+/**
+ * @function checkout
+ * @description Initiates the checkout process for a hotel booking, creating a Stripe session for payment.
+ * @route POST /api/checkout
+ * @access Public
+ * @returns {JSON} JSON object containing the URL for the Stripe checkout session.
+ * @throws {Error} If the booking or hotel is not found, if booking dates are invalid, or if there's an error during session creation.
+ * 
+ * This function processes a booking ID from the request body to retrieve booking details from the database.
+ * It validates the booking dates and calculates the number of nights for the stay. If the booking is valid, 
+ * it creates a Stripe checkout session with pricing information based on the room's price and the number of nights.
+ * The session URL is returned for the user to complete the payment.
+ * 
+ * Errors include:
+ * - 404 if the booking or hotel is not found.
+ * - 400 if the booking dates are invalid.
+ */
 const checkout = async (req, res, next) => {
   try {
     const bookingId = req.body.bookingId;
