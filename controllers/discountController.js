@@ -7,7 +7,18 @@ const getDiscounts = async (req, res, next) => {
       res.status(404);
       throw new Error("There are no discounts available");
     }
-    return res.status(200).json(discounts);
+    const validDiscounts = discounts.filter((discount) => {
+      const startDate = new Date(discount.startDate);
+      const endDate = new Date(discount.endDate);
+      return startDate <= endDate;
+    });
+
+    if (validDiscounts.length === 0) {
+      res.status(404);
+      throw new Error("No valid discounts found");
+    }
+
+    return res.status(200).json(validDiscounts);
   } catch (error) {
     next(error);
   }
