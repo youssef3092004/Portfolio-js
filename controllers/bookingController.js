@@ -26,10 +26,12 @@ const getBookings = async (req, res, next) => {
       .populate("user")
       .populate("hotel")
       .populate("room")
-      .populate("discount");
-    if (!bookings) {
-      res.status(404);
-      throw new Error("There are no bookings available");
+      .populate("discount")
+      .exec();
+    if (!bookings || bookings.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "There is no bookings by this ID" });
     }
     res.status(200).json({
       success: true,
