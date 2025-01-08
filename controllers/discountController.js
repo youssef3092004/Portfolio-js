@@ -28,17 +28,14 @@ const getDiscount = async (req, res, next) => {
 
   const createDiscount = async (req, res, next) => {
     try {
-      const { code, discount, start_date, end_date, status } = req.body;
-      const newDiscount = new Discount({
-        code,
-        discount,
-        start_date,
-        end_date,
-        status,
-      });
+      const { code, discount, start_date, end_date, status, maxUse } = req.body;
       if (!code) {
         res.status(400);
         throw new Error("Code is required");
+      }
+      if (discount <= 0 ) {
+        res.status(400);
+        throw new Error("The discount should be Greater than 0");
       }
       if (!discount) {
         res.status(400);
@@ -52,9 +49,26 @@ const getDiscount = async (req, res, next) => {
         res.status(400);
         throw new Error("End Date is required");
       }
+      if (!maxUse) {
+        res.status(400);
+        throw new Error("Max Use is required");
+      }
+      if (start_date > end_date || start_date < Date.now()) {
+        res.status(400);
+        throw new Error("Invalid start or end date");
+      }
+      const newDiscount = new Discount({
+        code,
+        discount,
+        start_date,
+        end_date,
+        status,
+        maxUse,
+      });
       const savedDiscount = await newDiscount.save();
       return res.status(201).json(savedDiscount);
     } catch (error) {
       next(error);
     }
   };
+  
