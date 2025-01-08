@@ -86,8 +86,7 @@ const createBooking = async (req, res, next) => {
 
 const updateBooking = async (req, res, next) => {
   try {
-    const { check_in, check_out, status, hotel, room, discount } =
-      req.body;
+    const { check_in, check_out, status, hotel, room, discount } = req.body;
     const updateField = {};
     if (check_in) updateField.check_in = check_in;
     if (check_out) updateField.check_out = check_out;
@@ -113,7 +112,11 @@ const updateBooking = async (req, res, next) => {
     }
     const findBooking = await Booking.findById(req.params.id);
     if (check_in || check_out || room) {
-      const total_price = await calculateTotalPrice(findBooking.room, findBooking.check_in, findBooking.check_out);
+      const total_price = await calculateTotalPrice(
+        findBooking.room,
+        findBooking.check_in,
+        findBooking.check_out
+      );
       updateField.total_price = total_price;
     }
     const booking = await Booking.findByIdAndUpdate(
@@ -159,7 +162,9 @@ const calculateTotalPrice = async (rooom, check_in, check_out) => {
       if (checkInDate >= checkOutDate) {
         throw new Error("Check-out date must be greater than check-in date");
       }
-      const nights = (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24);
+      const nights = Math.ceil(
+        (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)
+      );
       return room.price * nights;
     }
   } catch (error) {
