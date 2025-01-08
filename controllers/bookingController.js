@@ -196,23 +196,32 @@ const updateBooking = async (req, res, next) => {
       await incrementDiscountUsage(discount);
     }
     if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("Please provide fields to update");
+      return res
+        .status(400)
+        .json({ message: "Please provide fields to update." });
     }
     for (let i in updateField) {
-      if (!updateField[i] || updateField[i] === "") {
-        res.status(400);
-        throw new Error(
-          `${i.charAt(0).toUpperCase() + i.slice(1)} Is Required`
-        );
+      if (
+        updateField[i] === undefined ||
+        updateField[i] === null ||
+        updateField[i].toString().trim() === ""
+      ) {
+        return res.status(400).json({
+          message: `${i.charAt(0).toUpperCase() + i.slice(1)} is required.`,
+        });
       }
     }
     const findBooking = await Booking.findById(req.params.id);
+    if (!findBooking) {
+      return res
+        .status(404)
+        .json({ message: `No booking found with this ID: ${req.params.id}` });
+    }
     if (check_in || check_out || room) {
       const total_price = await calculateTotalPrice(
-        findBooking.room,
-        findBooking.check_in,
-        findBooking.check_out
+        room || findBooking.room,
+        check_in || findBooking.check_in,
+        check_out || findBooking.check_out
       );
       updateField.total_price = total_price;
     }
@@ -222,18 +231,20 @@ const updateBooking = async (req, res, next) => {
       { new: true }
     );
     if (!booking) {
-      res.status(400);
-      throw new Error("no booking with this id" + req.params.id);
+      return res
+        .status(404)
+        .json({ message: `No booking found with this ID: ${req.params.id}` });
     }
     res.status(200).json({
       success: true,
-      message: "Booking successfully Updated.",
+      message: "Booking successfully updated.",
       data: booking,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 /**
  * @route DELETE /api/bookings/:id
