@@ -89,7 +89,7 @@ const createAmenity = async (req, res, next) => {
  * @throws {Error} If required fields are missing, returns a 400 status with an error message.
  * @throws {Error} If the amenity with the provided ID is not found, returns a 404 status with an error message.
  * @returns {Object} The updated amenity object.
- * 
+ *
  * This route handler updates an existing amenity by its ID. It first checks if any required fields are missing in the request body.
  * Then, it uses `Amenity.findByIdAndUpdate()` to update the amenity in the database. If the amenity is not found or the update fails, a 404 error is thrown.
  * If the amenity is successfully updated, it is returned in a JSON format with a 200 status code.
@@ -129,27 +129,30 @@ const updateAmenity = async (req, res, next) => {
  * @route DELETE /api/amenities/:id
  * @desc Delete an amenity by its ID from the database.
  * @access Public
- * @param {string} id - The ID of the amenity to delete.
- * @throws {Error} If the amenity with the provided ID is not found, returns a 404 status with an error message.
- * @returns {Object} A message indicating the amenity has been removed.
- * 
- * This route handler deletes an amenity by its ID. It first checks if an amenity with the provided ID exists. If not, it returns a 404 error.
- * If the amenity exists, it uses `amenity.remove()` to delete the amenity from the database.
- * If the amenity is successfully deleted, a 200 status is returned with a success message.
- * If an error occurs during the operation, it is passed to the error handling middleware.
+ * @param {string} id - The unique ID of the amenity to delete.
+ * @throws {Error} If no amenity is found with the provided ID, returns a 404 status with an error message.
+ * @returns {Object} A message confirming the deletion of the amenity.
+ *
+ * This route handler deletes an amenity from the database based on the provided `id` parameter.
+ * It first checks if an amenity exists with the given ID. If no amenity is found, it returns a 404 error with a message indicating no amenity was found.
+ * If the amenity is found, it is removed from the database, and a success message confirming the deletion is returned with a 200 status code.
+ * Any errors encountered during the deletion process are passed to the next middleware.
  */
 const deleteAmenity = async (req, res, next) => {
-    try {
-        const amenity = await Amenity.findById(req.params.id);
-        if (!amenity) {
-            res.status(404);
-            throw new Error("There is no amenity by this ID");
-        }
-        await amenity.remove();
-        res.status(200).json({ message: "Amenity removed" });
-    } catch (error) {
-        next(error);
+  try {
+    const amenity = await Amenity.findById(req.params.id);
+    if (!amenity) {
+      return res.status(404).json({
+        message: "There is no amenity by this ID",
+      });
     }
+    await amenity.remove();
+    res.status(200).json({
+      message: "Amenity removed",
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = {
