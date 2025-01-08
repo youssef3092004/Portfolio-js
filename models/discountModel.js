@@ -38,16 +38,15 @@ const discountSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  usedCount: {
+    type: Number,
+    default: 0,
+  },
+  maxUse: {
+    type: Number,
+    required: true,
+  },
 });
-
-discountSchema.virtual("is_active").get(function () {
-  if (Date.now() < this.end_date) {
-    return this.status === "Active";
-  } else {
-    return this.status === "Inactive";
-  }
-});
-
 
 const Discount = mongoose.model("Discount", discountSchema);
 module.exports = Discount;
