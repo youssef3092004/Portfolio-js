@@ -36,34 +36,38 @@ const getBooking = async (req, res, next) => {
 
 const createBooking = async (req, res, next) => {
   try {
-    const {
-      check_in,
-      check_out,
-      total_price,
-      status,
-      user,
-      hotel,
-      room,
-      discount,
-    } = req.body;
+    const { check_in, check_out, status, user, hotel, room, discount } =
+      req.body;
     const requiredFields = {
       check_in,
       check_out,
-      total_price,
       status,
       user,
       hotel,
       room,
-      discount,
     };
+
     for (let i in requiredFields) {
       if (!requiredFields[i]) {
-        res.status(400);
-        throw new Error(
-          `${i.charAt(0).toUpperCase() + i.slice(1)} Is Required`
-        );
+        return res.status(400).json({
+          message: `${i.charAt(0).toUpperCase() + i.slice(1)} is required`,
+        });
       }
     }
+
+    let total_price = await calculateTotalPrice(room, check_in, check_out);
+    console.log("total price", total_price);
+
+    if (discount) {
+      await checkDiscountActiveOrInactive(discount);
+      total_price = await calculate_total_price_after_discount(
+        discount,
+        total_price
+      );
+      await incrementDiscountUsage(discount);
+      console.log("total price after discount", total_price);
+    }
+
     const newBooking = new Booking({
       check_in,
       check_out,
@@ -74,8 +78,14 @@ const createBooking = async (req, res, next) => {
       room,
       discount,
     });
+
     const savedBooking = await newBooking.save();
-    res.status(201).json(savedBooking);
+    res.status(200).json({
+      success: true,
+      message: "Booking successfully Created.",
+      data: savedBooking,
+    });
+    console.log("Booking created successfully");
   } catch (error) {
     next(error);
   }
