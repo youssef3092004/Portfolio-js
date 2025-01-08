@@ -62,9 +62,10 @@ const getAmenity = async (req, res, next) => {
  * @returns {Object} The newly created amenity.
  * 
  * This route handler creates a new amenity by accepting the necessary details in the request body: `name`, `description`, and `hotel_amenities`. 
- * It first checks if all required fields are provided. If any field is missing, a 400 error is thrown. If all required fields are present, 
- * it creates a new amenity document and saves it to the database. The newly created amenity is then returned with a 201 status code.
- * If an error occurs during the operation, it is passed to the error handling middleware.
+ * It first checks if all required fields are provided. If any field is missing, a 400 error is returned with a message indicating the missing field. 
+ * If all required fields are present, it creates a new amenity document and saves it to the database. 
+ * The newly created amenity is then returned with a 201 status code.
+ * In case of any errors during the database operation, the error is passed to the next middleware.
  */
 const createAmenity = async (req, res, next) => {
   try {
@@ -72,10 +73,9 @@ const createAmenity = async (req, res, next) => {
     const requiredFields = { name, description, hotel_amenities };
     for (let i in requiredFields) {
       if (!requiredFields[i]) {
-        res.status(400);
-        throw new Error(
-          `${i.charAt(0).toUpperCase() + i.slice(1)} is required`
-        );
+        return res.status(400).json({
+          message: `${i.charAt(0).toUpperCase() + i.slice(1)} is required`,
+        });
       }
     }
     const newAmenity = new Amenity({
@@ -89,3 +89,4 @@ const createAmenity = async (req, res, next) => {
     next(error);
   }
 };
+
