@@ -27,26 +27,24 @@ const getAmenities = async (req, res, next) => {
 
 /**
  * @route GET /api/amenities/:id
- * @desc Fetch a specific amenity by its ID from the database.
+ * @desc Retrieve a specific amenity by its ID from the database.
  * @access Public
- * @param {string} id - The ID of the amenity to fetch.
- * @throws {Error} If the amenity is not found, returns a 404 status with a relevant error message.
- * @returns {Object} The specific amenity matching the provided ID.
- *
- * This route handler fetches a specific amenity from the database based on the `id` parameter passed in the URL.
- * It uses the Mongoose model `Amenity` to query the database, and the `.populate("hotel_amenities")` method to retrieve the associated `hotel_amenities`.
- * If no amenity is found with the provided ID, a 404 error is thrown with the message "There is no amenity by this ID".
- * If the amenity is found, it is returned in JSON format with a status code of 200.
- * If an error occurs during the operation, it is passed to the error handling middleware.
+ * @param {string} id - The unique ID of the amenity to retrieve.
+ * @throws {Error} If no amenity is found with the provided ID, returns a 404 status with an error message.
+ * @returns {Object} The amenity object corresponding to the provided ID.
+ * 
+ * This route handler retrieves an amenity from the database using the provided `id` parameter from the request. 
+ * It first checks if an amenity exists with the given ID. If no amenity is found, it returns a 404 error with a message indicating no amenities are available. 
+ * If the amenity is found, the amenity object is returned with a 200 status code.
+ * In case of any errors during the database query, it passes the error to the next middleware.
  */
 const getAmenity = async (req, res, next) => {
   try {
-    const amenity = await Amenity.findById(req.params.id).populate(
-      "hotel_amenities"
-    );
+    const amenity = await Amenity.findById(req.params.id);
     if (!amenity) {
-      res.status(404);
-      throw new Error("There is no amenity by this ID");
+      return res
+        .status(404)
+        .json({ message: "There are no amenities available" });
     }
     res.status(200).json(amenity);
   } catch (error) {
