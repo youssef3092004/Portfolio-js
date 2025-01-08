@@ -1,4 +1,4 @@
-const Hotel = require("../models/hotel");
+const Hotel = require("../models/hotelModel");
 
 /**
  * @function getHotels
@@ -7,8 +7,8 @@ const Hotel = require("../models/hotel");
  * @access Public
  * @returns {Object} JSON array of hotel objects with populated location and review details.
  * @throws {Error} If no hotels are found or if the database query fails.
- * 
- * This function queries the database for all hotel documents, populates associated location and review data, 
+ *
+ * This function queries the database for all hotel documents, populates associated location and review data,
  * and returns them as a JSON array. If no hotels are found, it responds with a 404 status.
  */
 const getHotels = async (req, res, next) => {
@@ -31,9 +31,9 @@ const getHotels = async (req, res, next) => {
  * @access Public
  * @returns {JSON} JSON object representing a hotel with populated location, rooms, and review details.
  * @throws {Error} If no hotel is found with the provided ID or if the database query fails.
- * 
- * This function queries the database for a single hotel document using the provided ID in the request parameters, 
- * populates associated location, rooms, and review data, and returns it as a JSON object. If no hotel is found, 
+ *
+ * This function queries the database for a single hotel document using the provided ID in the request parameters,
+ * populates associated location, rooms, and review data, and returns it as a JSON object. If no hotel is found,
  * it responds with a 404 status code.
  */
 const getHotel = async (req, res, next) => {
@@ -59,10 +59,10 @@ const getHotel = async (req, res, next) => {
  * @access Public
  * @returns {JSON} JSON object representing the newly created hotel.
  * @throws {Error} If any required field (name, star rating, number of rooms, images, location) is missing or if the database query fails.
- * 
- * This function accepts hotel details from the request body, validates the required fields, 
- * creates a new hotel object, and saves it to the database. If any required fields are missing, 
- * it responds with a 404 status code and an error message. Upon successful creation, it returns the 
+ *
+ * This function accepts hotel details from the request body, validates the required fields,
+ * creates a new hotel object, and saves it to the database. If any required fields are missing,
+ * it responds with a 404 status code and an error message. Upon successful creation, it returns the
  * newly created hotel as a JSON object.
  */
 const createHotel = async (req, res, next) => {
@@ -119,9 +119,9 @@ const createHotel = async (req, res, next) => {
  * @access Public
  * @returns {JSON} JSON object representing the updated hotel.
  * @throws {Error} If no hotel is found with the provided ID or if no fields are provided for updating.
- * 
- * This function accepts updated hotel details in the request body and updates the corresponding hotel 
- * document in the database using the provided hotel ID. If no fields are provided to update, it responds 
+ *
+ * This function accepts updated hotel details in the request body and updates the corresponding hotel
+ * document in the database using the provided hotel ID. If no fields are provided to update, it responds
  * with a 400 status code and an error message. Upon successful update, it returns the updated hotel as a JSON object.
  */
 const updateHotel = async (req, res, next) => {
@@ -162,9 +162,9 @@ const updateHotel = async (req, res, next) => {
  * @access Public
  * @returns {JSON} JSON object of the deleted hotel.
  * @throws {Error} If no hotel is found with the provided ID.
- * 
- * This function accepts a hotel ID as a URL parameter, deletes the corresponding hotel document 
- * from the database, and returns the deleted hotel as a JSON object. If no hotel is found 
+ *
+ * This function accepts a hotel ID as a URL parameter, deletes the corresponding hotel document
+ * from the database, and returns the deleted hotel as a JSON object. If no hotel is found
  * with the provided ID, it responds with a 404 status code and an error message.
  */
 const deleteHotel = async (req, res, next) => {
@@ -180,6 +180,37 @@ const deleteHotel = async (req, res, next) => {
   }
 };
 
+/**
+ * @function getHotelsFromLocation
+ * @description Retrieves a list of hotels based on the specified location ID.
+ * @route GET /api/hotels/location/:id
+ * @access Public
+ * @returns {JSON} JSON object containing the list of hotels in the specified location.
+ * @throws {Error} If no hotels are found in the specified location.
+ *
+ * This function accepts a location ID as a URL parameter, queries the database for hotels
+ * in that location, and returns the list of hotels as a JSON object. Each hotel in the result
+ * includes its associated reviews through population. If no hotels are found, it responds
+ * with a 404 status code and an error message.
+ */
+const getHotelsFromLocation = async (req, res, next) => {
+  try {
+    const hotels = await Hotel.find({ location: req.params.id }).populate(
+      "review"
+    );
+    if (!hotels.length === 0) {
+      res.status(404);
+      throw new Error("There are no hotels available in this location");
+    }
+    res.status(200).json({
+      success: true,
+      message: "Hotels retrieved successfully",
+      data: hotels,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   getHotels,
@@ -187,4 +218,5 @@ module.exports = {
   createHotel,
   updateHotel,
   deleteHotel,
+  getHotelsFromLocation,
 };
