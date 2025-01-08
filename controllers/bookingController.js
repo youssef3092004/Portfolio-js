@@ -122,13 +122,25 @@ const createBooking = async (req, res, next) => {
 
     for (let i in requiredFields) {
       if (!requiredFields[i]) {
-        res.status(400);
-        throw new Error(
-          `${i.charAt(0).toUpperCase() + i.slice(1)} Is Required`
-        );
+        return res.status(400).json({
+          message: `${i.charAt(0).toUpperCase() + i.slice(1)} is required`,
+        });
       }
     }
-    const total_price = await calculateTotalPrice(room, check_in, check_out);
+
+    let total_price = await calculateTotalPrice(room, check_in, check_out);
+    console.log("total price", total_price);
+
+    if (discount) {
+      await checkDiscountActiveOrInactive(discount);
+      total_price = await calculate_total_price_after_discount(
+        discount,
+        total_price
+      );
+      await incrementDiscountUsage(discount);
+      console.log("total price after discount", total_price);
+    }
+
     const newBooking = new Booking({
       check_in,
       check_out,
@@ -139,10 +151,7 @@ const createBooking = async (req, res, next) => {
       room,
       discount,
     });
-    if (discount) {
-      await checkDiscountActiveOrInactive(discount);
-      await incrementDiscountUsage(discount);
-    }
+
     const savedBooking = await newBooking.save();
     res.status(200).json({
       success: true,
