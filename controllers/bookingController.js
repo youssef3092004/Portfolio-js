@@ -254,7 +254,6 @@ const updateBooking = async (req, res, next) => {
   }
 };
 
-
 /**
  * @route DELETE /api/bookings/:id
  * @desc Delete a booking by its ID.
@@ -327,6 +326,39 @@ const calculateTotalPrice = async (rooom, check_in, check_out) => {
   }
 };
 
+/**
+ * @function calculate_total_price_after_discount
+ * @desc Calculate the total price after applying a discount.
+ * @param {string} discountId - The ID of the discount to be applied.
+ * @param {number} total_price - The original total price before the discount.
+ * @returns {number} The total price after applying the discount.
+ * @throws {Error} If the discount is invalid or not found, an error is thrown.
+ *
+ * This function fetches the discount from the database using the provided discount ID.
+ * It then calculates and returns the total price after applying the discount percentage.
+ * If the discount is invalid (not found in the database), an error is thrown.
+ *
+ * Example:
+ * ```javascript
+ * const finalPrice = await calculate_total_price_after_discount('discountId123', 100);
+ * console.log(finalPrice); // 90 if the discount is 10%.
+ * ```
+ */
+const calculate_total_price_after_discount = async (
+  discountId,
+  total_price
+) => {
+  try {
+    const discountM = await Discount.findById(discountId);
+    if (!discountM) {
+      throw new Error("Invalid discount");
+    }
+    return total_price - (total_price * discountM.discount) / 100;
+  } catch (error) {
+    console.error("Error calculating total price after discount:", error);
+    throw error;
+  }
+};
 module.exports = {
   getBookings,
   getBooking,
