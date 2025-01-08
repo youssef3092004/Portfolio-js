@@ -1,4 +1,4 @@
-const Amenity = require("../models/amenity");
+const Amenity = require("../models/ameniyModel");
 
 /**
  * @route GET /api/amenities
@@ -13,10 +13,11 @@ const Amenity = require("../models/amenity");
  */
 const getAmenities = async (req, res, next) => {
   try {
-    const amenities = await Amenity.find().populate("hotel_amenities");
-    if (!amenities) {
-      res.status(404);
-      throw new Error("There are no amenities available");
+    const amenities = await Amenity.find();
+    if (!amenities || amenities.length === 0) {
+      return res.status(404).json({
+        message: "There are no amenities available",
+      });
     }
     return res.status(200).json(amenities);
   } catch (error) {
@@ -26,26 +27,24 @@ const getAmenities = async (req, res, next) => {
 
 /**
  * @route GET /api/amenities/:id
- * @desc Fetch a specific amenity by its ID from the database.
+ * @desc Retrieve a specific amenity by its ID from the database.
  * @access Public
- * @param {string} id - The ID of the amenity to fetch.
- * @throws {Error} If the amenity is not found, returns a 404 status with a relevant error message.
- * @returns {Object} The specific amenity matching the provided ID.
- *
- * This route handler fetches a specific amenity from the database based on the `id` parameter passed in the URL.
- * It uses the Mongoose model `Amenity` to query the database, and the `.populate("hotel_amenities")` method to retrieve the associated `hotel_amenities`.
- * If no amenity is found with the provided ID, a 404 error is thrown with the message "There is no amenity by this ID".
- * If the amenity is found, it is returned in JSON format with a status code of 200.
- * If an error occurs during the operation, it is passed to the error handling middleware.
+ * @param {string} id - The unique ID of the amenity to retrieve.
+ * @throws {Error} If no amenity is found with the provided ID, returns a 404 status with an error message.
+ * @returns {Object} The amenity object corresponding to the provided ID.
+ * 
+ * This route handler retrieves an amenity from the database using the provided `id` parameter from the request. 
+ * It first checks if an amenity exists with the given ID. If no amenity is found, it returns a 404 error with a message indicating no amenities are available. 
+ * If the amenity is found, the amenity object is returned with a 200 status code.
+ * In case of any errors during the database query, it passes the error to the next middleware.
  */
 const getAmenity = async (req, res, next) => {
   try {
-    const amenity = await Amenity.findById(req.params.id).populate(
-      "hotel_amenities"
-    );
+    const amenity = await Amenity.findById(req.params.id);
     if (!amenity) {
-      res.status(404);
-      throw new Error("There is no amenity by this ID");
+      return res
+        .status(404)
+        .json({ message: "There are no amenities available" });
     }
     res.status(200).json(amenity);
   } catch (error) {
@@ -53,6 +52,21 @@ const getAmenity = async (req, res, next) => {
   }
 };
 
+/**
+ * @route POST /api/amenities
+ * @desc Create a new amenity in the database.
+ * @access Public
+ * @param {string} name - The name of the amenity.
+ * @param {string} description - A description of the amenity.
+ * @param {Array} hotel_amenities - Array of hotel amenity IDs that this amenity is associated with.
+ * @throws {Error} If any of the required fields (name, description, hotel_amenities) are missing, returns a 400 status with an error message.
+ * @returns {Object} The newly created amenity.
+ * 
+ * This route handler creates a new amenity by accepting the necessary details in the request body: `name`, `description`, and `hotel_amenities`. 
+ * It first checks if all required fields are provided. If any field is missing, a 400 error is thrown. If all required fields are present, 
+ * it creates a new amenity document and saves it to the database. The newly created amenity is then returned with a 201 status code.
+ * If an error occurs during the operation, it is passed to the error handling middleware.
+ */
 const createAmenity = async (req, res, next) => {
   try {
     const { name, description, hotel_amenities } = req.body;
@@ -121,4 +135,42 @@ const updateAmenity = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+/**
+ * @route DELETE /api/amenities/:id
+ * @desc Delete an amenity by its ID from the database.
+ * @access Public
+ * @param {string} id - The unique ID of the amenity to delete.
+ * @throws {Error} If no amenity is found with the provided ID, returns a 404 status with an error message.
+ * @returns {Object} A message confirming the deletion of the amenity.
+ *
+ * This route handler deletes an amenity from the database based on the provided `id` parameter.
+ * It first checks if an amenity exists with the given ID. If no amenity is found, it returns a 404 error with a message indicating no amenity was found.
+ * If the amenity is found, it is removed from the database, and a success message confirming the deletion is returned with a 200 status code.
+ * Any errors encountered during the deletion process are passed to the next middleware.
+ */
+const deleteAmenity = async (req, res, next) => {
+  try {
+    const amenity = await Amenity.findById(req.params.id);
+    if (!amenity) {
+      return res.status(404).json({
+        message: "There is no amenity by this ID",
+      });
+    }
+    await amenity.remove();
+    res.status(200).json({
+      message: "Amenity removed",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  getAmenities,
+  getAmenity,
+  createAmenity,
+  updateAmenity,
+  deleteAmenity,
 };
