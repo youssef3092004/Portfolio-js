@@ -170,5 +170,5 @@ module.exports = {
   getLocations,
   getLocation,
   createLocation,
-
+  deleteLocation,
 };
