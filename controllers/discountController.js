@@ -58,6 +58,7 @@ const getDiscount = async (req, res, next) => {
   }
 };
 
+
 /**
  * @function createDiscount
  * @desc Creates a new discount and saves it to the database.
@@ -229,25 +230,43 @@ const incrementDiscountUsage = async (discountId) => {
  * This function checks all active discounts and updates their status to "Inactive" if the current date is greater than the `end_date`. 
  * The function handles multiple discounts and ensures statuses are updated as necessary.
  */
-const updateDiscountStatuses = async () => {
+const updateDiscount = async (req, res, next) => {
   try {
-    const discounts = await Discount.find({ status: "Active" });
-    if (!discounts) {
-      throw new Error("Discounts not found");
+    const { code, discount, start_date, end_date, status, maxUse } = req.body;
+    const updateField = {};
+    if (code) updateField.code = code;
+    if (discount) updateField.discount = discount;
+    if (start_date) updateField.start_date = start_date;
+    if (end_date) updateField.end_date = end_date;
+    if (status) updateField.status = status;
+    if (maxUse) updateField.maxUse = maxUse;
+    if (Object.keys(updateField).length === 0) {
+      res.status(400);
+      throw new Error("Please provide fields to update");
     }
-    const update = discounts.map((discount) => {
-      if (Date.now() > discount.end_date) {
-        discount.status = "Inactive";
-        discount.updated_at = Date.now();
-        return discount.save();
+    for (let i in updateField) {
+      if (!updateField[i] || updateField[i] === "") {
+        res.status(400);
+        throw new Error(`${updateField[i]} is required`);
       }
-    });
-    await Promise.all(update);
-    console.log(
-      `Checked and updated discount statuses for ${discounts.length} discounts`
+    }
+    const diiscount = await Discount.findByIdAndUpdate(
+      req.params.id,
+      updateField,
+      {
+        new: true,
+        runValidators: true,
+      }
     );
+    if (!diiscount) {
+      res.status(404);
+      throw new Error("There is no discount by this ID");
+    }
+    diiscount.updated_at = Date.now();
+    const savedDiscount = await diiscount.save();
+    return res.status(200).json(savedDiscount);
   } catch (error) {
-    console.error("Error updating discount statuses:", error.message);
+    next(error);
   }
 };
 
@@ -277,7 +296,7 @@ const checkDiscountActiveOrInactive = async (discountId) => {
 }
 
 module.exports = {
-  getDiscounts,
+  getDiscounts, 
   getDiscount,
   createDiscount,
   updateDiscount,
