@@ -3,16 +3,16 @@ Bookify is a backend project for booking hotels based on a specific location. In
 
 ## 📖 Table of Contents
 
-- [Features](#features)
-- [Technology Stack](#technology-stack)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Tests](#tests)
-- [Documentation](#documentation)
-- [License](#license)
-- [Git Flow](#git-flow)
-- [Screenshots](#screenshots)
-- [Authors](#authors)
+- [Features](#-features)
+- [Technology Stack](#%EF%B8%8F-technology-stack)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Tests](#-tests)
+- [Documentation](#-documentation)
+- [License](#-license)
+- [Git Flow](#-git-flow)
+- [Screenshots](#-screenshots)
+- [Authors](#-authors)
 
 
 ## 💡 Features
@@ -81,10 +81,10 @@ We have implemented unit tests to ensure all endpoints are reliable, secure, and
 npm run test
 ```
 
-## 📝Documentation
+## 📝 Documentation
 We document the API with Swagger, providing clear and interactive documentation for all endpoints, request parameters, and responses. This ensures easy access and understanding for developers.
 
-## 📜License
+## 📜 License
 
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/youssef3092004/Portfolio-js/blob/dev/LICENSE) file for more details.
 
