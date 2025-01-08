@@ -13,10 +13,11 @@ const Amenity = require("../models/amenity");
  */
 const getAmenities = async (req, res, next) => {
   try {
-    const amenities = await Amenity.find().populate("hotel_amenities");
-    if (!amenities) {
-      res.status(404);
-      throw new Error("There are no amenities available");
+    const amenities = await Amenity.find();
+    if (!amenities || amenities.length === 0) {
+      return res.status(404).json({
+        message: "There are no amenities available",
+      });
     }
     return res.status(200).json(amenities);
   } catch (error) {
