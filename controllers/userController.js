@@ -17,7 +17,7 @@ const { validatePassword, validatePhone, validateEmail } = require("../utils");
 const getUsers = async (req, res, next) => {
   try {
     const users = await User.find();
-    if (!users) {
+    if (!users || users.length === 0) {
       res.status(404);
       throw new Error("There are no users available");
     }
