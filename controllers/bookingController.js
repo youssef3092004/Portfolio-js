@@ -23,12 +23,18 @@ const getBooking = async (req, res, next) => {
       .populate("user")
       .populate("hotel")
       .populate("room")
-      .populate("discount");
+      .populate("discount")
+      .exec();
     if (!booking) {
-      res.status(404);
-      throw new Error("There is no booking by this ID");
+      return res
+        .status(404)
+        .json({ message: "There is no booking by this ID" });
     }
-    res.status(200).json(booking);
+    res.status(200).json({
+      success: true,
+      message: "Booking retrieved successfully.",
+      data: booking,
+    });
   } catch (error) {
     next(error);
   }
