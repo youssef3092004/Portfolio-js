@@ -316,7 +316,9 @@ const calculateTotalPrice = async (rooom, check_in, check_out) => {
       if (checkInDate >= checkOutDate) {
         throw new Error("Check-out date must be greater than check-in date");
       }
-      const nights = (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24);
+      const nights = Math.ceil(
+        (checkOutDate - checkInDate) / (1000 * 60 * 60 * 24)
+      );
       return room.price * nights;
     }
   } catch (error) {
