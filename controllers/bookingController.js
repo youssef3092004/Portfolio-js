@@ -83,47 +83,63 @@ createBooking = async (req, res, next) => {
 
 const updateBooking = async (req, res, next) => {
   try {
-    const {
-      check_in,
-      check_out,
-      total_price,
-      status,
-      user,
-      hotel,
-      room,
-      discount,
-    } = req.body;
+    const { check_in, check_out, status, hotel, room, discount } = req.body;
     const updateField = {};
     if (check_in) updateField.check_in = check_in;
     if (check_out) updateField.check_out = check_out;
-    if (total_price) updateField.total_price = total_price;
     if (status) updateField.status = status;
-    if (user) updateField.user = user;
     if (hotel) updateField.hotel = hotel;
     if (room) updateField.room = room;
-    if (discount) updateField.discount = discount;
+    if (discount) {
+      updateField.discount = discount;
+      await checkDiscountActiveOrInactive(discount);
+      await incrementDiscountUsage(discount);
+    }
     if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("Please provide fields to update");
+      return res
+        .status(400)
+        .json({ message: "Please provide fields to update." });
     }
     for (let i in updateField) {
-      if (!updateField[i] || updateField[i] === "") {
-        res.status(400);
-        throw new Error(
-          `${i.charAt(0).toUpperCase() + i.slice(1)} Is Required`
-        );
+      if (
+        updateField[i] === undefined ||
+        updateField[i] === null ||
+        updateField[i].toString().trim() === ""
+      ) {
+        return res.status(400).json({
+          message: `${i.charAt(0).toUpperCase() + i.slice(1)} is required.`,
+        });
       }
+    }
+    const findBooking = await Booking.findById(req.params.id);
+    if (!findBooking) {
+      return res
+        .status(404)
+        .json({ message: `No booking found with this ID: ${req.params.id}` });
+    }
+    if (check_in || check_out || room) {
+      const total_price = await calculateTotalPrice(
+        room || findBooking.room,
+        check_in || findBooking.check_in,
+        check_out || findBooking.check_out
+      );
+      updateField.total_price = total_price;
     }
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      { $set: updateField },
       { new: true }
     );
     if (!booking) {
-      res.status(400);
-      throw new Error("no booking with this id" + req.params.id);
+      return res
+        .status(404)
+        .json({ message: `No booking found with this ID: ${req.params.id}` });
     }
-    res.status(200).json(booking);
+    res.status(200).json({
+      success: true,
+      message: "Booking successfully updated.",
+      data: booking,
+    });
   } catch (error) {
     next(error);
   }
