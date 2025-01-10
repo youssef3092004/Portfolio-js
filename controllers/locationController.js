@@ -7,14 +7,14 @@ const Location = require("../models/locationModel");
  * @access Public
  * @returns {JSON} JSON array of location objects.
  * @throws {Error} If no locations are found in the database or if the database query fails.
- * 
- * This function queries the database for all location documents and returns them as a JSON array. 
+ *
+ * This function queries the database for all location documents and returns them as a JSON array.
  * If no locations are found, it responds with a 404 status code and an error message.
  */
 const getLocations = async (req, res, next) => {
   try {
     const locations = await Location.find();
-    if (!locations) {
+    if (!locations || locations.length === 0) {
       res.status(404);
       throw new Error("There are no locations available");
     }
@@ -32,9 +32,9 @@ const getLocations = async (req, res, next) => {
  * @param {string} id - The ID of the location to fetch from the database.
  * @returns {JSON} A JSON object representing the location.
  * @throws {Error} If no location is found for the provided ID or if the database query fails.
- * 
- * This function queries the database for a location by its unique ID provided in the request parameters. 
- * If the location is found, it returns the location data as a JSON object. 
+ *
+ * This function queries the database for a location by its unique ID provided in the request parameters.
+ * If the location is found, it returns the location data as a JSON object.
  * If no location is found, it responds with a 404 status code and an error message.
  */
 const getLocation = async (req, res, next) => {
@@ -49,8 +49,9 @@ const getLocation = async (req, res, next) => {
     next(error);
   }
 };
-  
-  /**
+
+/**
+
  * @function createLocation
  * @description Creates a new location in the database.
  * @route POST /api/locations
@@ -62,20 +63,14 @@ const getLocation = async (req, res, next) => {
  * @param {string} req.body.zip_code - The zip code of the location.
  * @returns {JSON} A JSON object representing the newly created location.
  * @throws {Error} If any required field is missing or if the database query fails.
- * 
- * This function receives location data from the request body, validates that all required fields are present, 
- * creates a new location document, and saves it to the database. If successful, it returns the saved location 
+ *
+ * This function receives location data from the request body, validates that all required fields are present,
+ * creates a new location document, and saves it to the database. If successful, it returns the saved location
  * as a JSON object. If any required field is missing, it responds with a 404 status code and an error message.
  */
 const createLocation = async (req, res, next) => {
   try {
     const { country, city, address, zip_code } = req.body;
-    const newLocation = new Location({
-      country,
-      city,
-      address,
-      zip_code,
-    });
     if (!country) {
       res.status(404);
       throw new Error("Country is required");
@@ -92,6 +87,12 @@ const createLocation = async (req, res, next) => {
       res.status(404);
       throw new Error("Zip Code is required");
     }
+    const newLocation = new Location({
+      country,
+      city,
+      address,
+      zip_code,
+    });
     const savedLocation = await newLocation.save();
     return res.status(200).json(savedLocation);
   } catch (error) {
@@ -165,11 +166,9 @@ const deleteLocation = async (req, res, next) => {
   }
 };
 
-  
 module.exports = {
   getLocations,
   getLocation,
   createLocation,
-  updateLocation,
   deleteLocation,
 };

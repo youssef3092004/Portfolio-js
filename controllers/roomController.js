@@ -13,12 +13,11 @@ const Room = require("../models/roomModel");
  */
 const getRooms = async (req, res, next) => {
   try {
-    const rooms = await Room.find().populate("hotel").populate("amenities");
-    if (!rooms) {
-      res.status(404);
-      throw new Error("There are no rooms available");
+    const rooms = await Room.find().populate("hotel amenities").exec();
+    if (rooms.length === 0) {
+      return next({ status: 404, message: "There are no rooms available" });
     }
-    return res.status(200).json(rooms);
+    res.status(200).json(rooms);
   } catch (error) {
     next(error);
   }

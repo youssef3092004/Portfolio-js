@@ -13,12 +13,16 @@ const Review = require("../models/reviewModel");
  */
 const getReviews = async (req, res, next) => {
   try {
-    const reviews = await Review.find().populate("user").populate("hotel");
-    if (!reviews) {
-      res.status(404);
-      throw new Error("There are no reviews available");
+    const reviews = await Review.find()
+      .populate("user")
+      .populate("hotel")
+      .exec();
+    if (reviews.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "There are no reviews available" });
     }
-    return res.status(200).json(reviews);
+    res.status(200).json(reviews);
   } catch (error) {
     next(error);
   }
@@ -40,10 +44,10 @@ const getReview = async (req, res, next) => {
   try {
     const review = await Review.findById(req.params.id)
       .populate("user")
-      .populate("hotel");
-    if (!review) {
-      res.status(404);
-      throw new Error("There is no review by this ID");
+      .populate("hotel")
+      .exec();
+    if (!review || review.length === 0) {
+      return res.status(404).json({ message: "There is no review by this ID" });
     }
     res.status(200).json(review);
   } catch (error) {
