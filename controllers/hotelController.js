@@ -13,7 +13,7 @@ const Hotel = require("../models/hotelModel");
  */
 const getHotels = async (req, res, next) => {
   try {
-    const hotels = await Hotel.find().populate("location").populate("review");
+    const hotels = await Hotel.find().populate("location");
     if (!hotels) {
       res.status(404);
       throw new Error("There are no hotels available");
@@ -40,8 +40,6 @@ const getHotel = async (req, res, next) => {
   try {
     const hotel = await Hotel.findById(req.params.id)
       .populate("location")
-      .populate("rooms")
-      .populate("review");
     if (!hotel) {
       res.status(404);
       throw new Error("There is no hotel by this ID");
