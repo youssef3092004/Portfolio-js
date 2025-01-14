@@ -170,5 +170,6 @@ module.exports = {
   getLocations,
   getLocation,
   createLocation,
+  updateLocation,
   deleteLocation,
 };
