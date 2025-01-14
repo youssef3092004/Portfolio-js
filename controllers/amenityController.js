@@ -32,9 +32,9 @@ const getAmenities = async (req, res, next) => {
  * @param {string} id - The unique ID of the amenity to retrieve.
  * @throws {Error} If no amenity is found with the provided ID, returns a 404 status with an error message.
  * @returns {Object} The amenity object corresponding to the provided ID.
- * 
- * This route handler retrieves an amenity from the database using the provided `id` parameter from the request. 
- * It first checks if an amenity exists with the given ID. If no amenity is found, it returns a 404 error with a message indicating no amenities are available. 
+ *
+ * This route handler retrieves an amenity from the database using the provided `id` parameter from the request.
+ * It first checks if an amenity exists with the given ID. If no amenity is found, it returns a 404 error with a message indicating no amenities are available.
  * If the amenity is found, the amenity object is returned with a 200 status code.
  * In case of any errors during the database query, it passes the error to the next middleware.
  */
@@ -58,19 +58,18 @@ const getAmenity = async (req, res, next) => {
  * @access Public
  * @param {string} name - The name of the amenity.
  * @param {string} description - A description of the amenity.
- * @param {Array} hotel_amenities - Array of hotel amenity IDs that this amenity is associated with.
  * @throws {Error} If any of the required fields (name, description, hotel_amenities) are missing, returns a 400 status with an error message.
  * @returns {Object} The newly created amenity.
- * 
- * This route handler creates a new amenity by accepting the necessary details in the request body: `name`, `description`, and `hotel_amenities`. 
- * It first checks if all required fields are provided. If any field is missing, a 400 error is thrown. If all required fields are present, 
+ *
+ * This route handler creates a new amenity by accepting the necessary details in the request body: `name`, `description`, and `hotel_amenities`.
+ * It first checks if all required fields are provided. If any field is missing, a 400 error is thrown. If all required fields are present,
  * it creates a new amenity document and saves it to the database. The newly created amenity is then returned with a 201 status code.
  * If an error occurs during the operation, it is passed to the error handling middleware.
  */
 const createAmenity = async (req, res, next) => {
   try {
-    const { name, description, hotel_amenities } = req.body;
-    const requiredFields = { name, description, hotel_amenities };
+    const { name, description } = req.body;
+    const requiredFields = { name, description };
     for (let i in requiredFields) {
       if (!requiredFields[i]) {
         res.status(400);
@@ -82,7 +81,6 @@ const createAmenity = async (req, res, next) => {
     const newAmenity = new Amenity({
       name,
       description,
-      hotel_amenities,
     });
     const savedAmenity = await newAmenity.save();
     res.status(201).json(savedAmenity);
@@ -98,7 +96,6 @@ const createAmenity = async (req, res, next) => {
  * @param {string} id - The unique ID of the amenity to update.
  * @param {string} name - The updated name of the amenity.
  * @param {string} description - The updated description of the amenity.
- * @param {Array} hotel_amenities - The updated array of hotel amenity IDs associated with this amenity.
  * @throws {Error} If `name` or `description` are missing, returns a 400 status with an error message.
  * @returns {Object} The updated amenity object.
  *
@@ -110,11 +107,10 @@ const createAmenity = async (req, res, next) => {
  */
 const updateAmenity = async (req, res, next) => {
   try {
-    const { name, description, hotel_amenities } = req.body;
+    const { name, description } = req.body;
     const updateField = {};
     if (name) updateField.name = name;
     if (description) updateField.description = description;
-    if (hotel_amenities) updateField.hotel_amenities = hotel_amenities;
     if (!name) {
       return res.status(400).json({ message: "Name is required" });
     }
@@ -126,11 +122,6 @@ const updateAmenity = async (req, res, next) => {
       { $set: updateField },
       { new: true }
     );
-    if (!updatedAmenity) {
-      return res.status(404).json({
-        message: "Failed to update the amenity",
-      });
-    }
     res.status(200).json(updatedAmenity);
   } catch (error) {
     next(error);
