@@ -18,9 +18,7 @@ const getDiscounts = async (req, res, next) => {
       throw new Error("There are no discounts available");
     }
     const validDiscounts = discounts.filter((discount) => {
-      const startDate = new Date(discount.startDate);
-      const endDate = new Date(discount.endDate);
-      return startDate <= endDate;
+      return discount.status === "Active";
     });
 
     if (validDiscounts.length === 0) {
