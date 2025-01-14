@@ -1,5 +1,6 @@
 const Booking = require("../models/bookingModel");
 const Room = require("../models/roomModel");
+const Discount = require("../models/discountModel");
 
 const {
   incrementDiscountUsage,
@@ -88,7 +89,6 @@ const getBooking = async (req, res, next) => {
  * @body {Object} - The details of the new booking:
  *  - {string} check_in - The check-in date.
  *  - {string} check_out - The check-out date.
- *  - {string} status - The booking status (e.g., "confirmed").
  *  - {string} user - The ID of the user making the booking.
  *  - {string} hotel - The ID of the hotel for the booking.
  *  - {string} room - The ID of the room for the booking.
@@ -109,12 +109,11 @@ const getBooking = async (req, res, next) => {
  */
 const createBooking = async (req, res, next) => {
   try {
-    const { check_in, check_out, status, user, hotel, room, discount } =
+    const { check_in, check_out, user, hotel, room, discount } =
       req.body;
     const requiredFields = {
       check_in,
       check_out,
-      status,
       user,
       hotel,
       room,
@@ -145,7 +144,6 @@ const createBooking = async (req, res, next) => {
       check_in,
       check_out,
       total_price,
-      status,
       user,
       hotel,
       room,
@@ -192,11 +190,10 @@ const createBooking = async (req, res, next) => {
  */
 const updateBooking = async (req, res, next) => {
   try {
-    const { check_in, check_out, status, hotel, room, discount } = req.body;
+    const { check_in, check_out, hotel, room, discount } = req.body;
     const updateField = {};
     if (check_in) updateField.check_in = check_in;
     if (check_out) updateField.check_out = check_out;
-    if (status) updateField.status = status;
     if (hotel) updateField.hotel = hotel;
     if (room) updateField.room = room;
     if (discount) {
