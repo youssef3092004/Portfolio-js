@@ -132,7 +132,8 @@ const updateReview = async (req, res, next) => {
       res.status(404);
       throw new Error("Cannot Update The Review");
     }
-    res.status(200).json(review);
+    const savedReview = await review.save();
+    res.status(200).json(savedReview);
   } catch (error) {
     next(error);
   }
