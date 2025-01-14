@@ -132,7 +132,7 @@ const updateRoom = async (req, res, next) => {
     }
 
     const room = await Room.findByIdAndUpdate(
-      updateField,
+      req.params.id,
       { $set: updateField },
       { new: true }
     );
