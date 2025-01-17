@@ -1,4 +1,5 @@
-const Location = require("../models/locationModel");
+const Location = require ('../models/locationModel');
+const pagination = require ('../utils/pagination');
 
 /**
  * @function getLocations
@@ -13,14 +14,21 @@ const Location = require("../models/locationModel");
  */
 const getLocations = async (req, res, next) => {
   try {
-    const locations = await Location.find();
+    const {page, limit, skip} = pagination (req);
+    const locations = await Location.find ().skip (skip).limit (limit);
+    const total = await Location.countDocuments ();
     if (!locations || locations.length === 0) {
-      res.status(404);
-      throw new Error("There are no locations available");
+      res.status (404).json ({message: 'There are no locations available'});
     }
-    return res.status(200).json(locations);
+    return res.status (200).json ({
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil (total / limit),
+      data: locations,
+    });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -39,14 +47,14 @@ const getLocations = async (req, res, next) => {
  */
 const getLocation = async (req, res, next) => {
   try {
-    const location = await Location.findById(req.params.id);
+    const location = await Location.findById (req.params.id);
     if (!location) {
-      res.status(404);
-      throw new Error("There is no location by this ID");
+      res.status (404);
+      throw new Error ('There is no location by this ID');
     }
-    return res.status(200).json(location);
+    return res.status (200).json (location);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -70,37 +78,37 @@ const getLocation = async (req, res, next) => {
  */
 const createLocation = async (req, res, next) => {
   try {
-    const { country, city, address, zip_code } = req.body;
+    const {country, city, address, zip_code} = req.body;
     if (!country) {
-      res.status(404);
-      throw new Error("Country is required");
+      res.status (404);
+      throw new Error ('Country is required');
     }
     if (!city) {
-      res.status(404);
-      throw new Error("City is required");
+      res.status (404);
+      throw new Error ('City is required');
     }
     if (!address) {
-      res.status(404);
-      throw new Error("Address is required");
+      res.status (404);
+      throw new Error ('Address is required');
     }
     if (!zip_code) {
-      res.status(404);
-      throw new Error("Zip Code is required");
+      res.status (404);
+      throw new Error ('Zip Code is required');
     }
-    const newLocation = new Location({
+    const newLocation = new Location ({
       country,
       city,
       address,
       zip_code,
     });
-    const savedLocation = await newLocation.save();
-    return res.status(200).json(savedLocation);
+    const savedLocation = await newLocation.save ();
+    return res.status (200).json (savedLocation);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
-  
-  /**
+
+/**
  * @function updateLocation
  * @description Updates an existing location in the database.
  * @route PUT /api/locations/:id
@@ -113,32 +121,32 @@ const createLocation = async (req, res, next) => {
  */
 const updateLocation = async (req, res, next) => {
   try {
-    const { country, city, address, zip_code } = req.body;
+    const {country, city, address, zip_code} = req.body;
     const updateField = {};
 
     if (country) updateField.country = country;
     if (city) updateField.city = city;
     if (address) updateField.address = address;
     if (zip_code) updateField.zip_code = zip_code;
-    if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("Please provide fields to update");
+    if (Object.keys (updateField).length === 0) {
+      res.status (400);
+      throw new Error ('Please provide fields to update');
     }
 
-    const location = await Location.findByIdAndUpdate(
+    const location = await Location.findByIdAndUpdate (
       req.params.id,
       {
         $set: updateField,
       },
-      { new: true }
+      {new: true}
     );
     if (!location) {
-      res.status(404);
-      throw new Error("There is no location by this ID");
+      res.status (404);
+      throw new Error ('There is no location by this ID');
     }
-    return res.status(200).json(location);
+    return res.status (200).json (location);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -155,14 +163,14 @@ const updateLocation = async (req, res, next) => {
  */
 const deleteLocation = async (req, res, next) => {
   try {
-    const location = await Location.findByIdAndDelete(req.params.id);
+    const location = await Location.findByIdAndDelete (req.params.id);
     if (!location) {
-      res.status(404);
-      throw new Error("There is no location by this ID");
+      res.status (404);
+      throw new Error ('There is no location by this ID');
     }
-    return res.status(200).json(location);
+    return res.status (200).json (location);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
