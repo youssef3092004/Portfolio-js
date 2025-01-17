@@ -1,4 +1,5 @@
-const Review = require("../models/reviewModel");
+const Review = require ('../models/reviewModel');
+const pagination = require ('../utils/pagination');
 
 /**
  * @function getReviews
@@ -13,18 +14,28 @@ const Review = require("../models/reviewModel");
  */
 const getReviews = async (req, res, next) => {
   try {
-    const reviews = await Review.find()
-      .populate("user")
-      .populate("hotel")
-      .exec();
+    const {page, limit, skip} = pagination (req);
+    const reviews = await Review.find ()
+      .populate ('user')
+      .populate ('hotel')
+      .skip (skip)
+      .limit (limit)
+      .exec ();
+    const total = await Review.countDocuments ();
     if (reviews.length === 0) {
       return res
-        .status(404)
-        .json({ message: "There are no reviews available" });
+        .status (404)
+        .json ({message: 'There are no reviews available'});
     }
-    res.status(200).json(reviews);
+    res.status (200).json ({
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil (total / limit),
+      data: reviews,
+    });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -42,16 +53,16 @@ const getReviews = async (req, res, next) => {
  */
 const getReview = async (req, res, next) => {
   try {
-    const review = await Review.findById(req.params.id)
-      .populate("user")
-      .populate("hotel")
-      .exec();
+    const review = await Review.findById (req.params.id)
+      .populate ('user')
+      .populate ('hotel')
+      .exec ();
     if (!review || review.length === 0) {
-      return res.status(404).json({ message: "There is no review by this ID" });
+      return res.status (404).json ({message: 'There is no review by this ID'});
     }
-    res.status(200).json(review);
+    res.status (200).json (review);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -68,33 +79,33 @@ const getReview = async (req, res, next) => {
  */
 const createReview = async (req, res, next) => {
   try {
-    const { rating, description, user, hotel } = req.body;
-    const newReview = new Review({
+    const {rating, description, user, hotel} = req.body;
+    const newReview = new Review ({
       rating,
       description,
       user,
       hotel,
     });
     if (!rating) {
-      res.status(404);
-      throw new Error("Rating is required");
+      res.status (404);
+      throw new Error ('Rating is required');
     }
     if (!description) {
-      res.status(404);
-      throw new Error("Description is required");
+      res.status (404);
+      throw new Error ('Description is required');
     }
     if (!user) {
-      res.status(404);
-      throw new Error("User is required");
+      res.status (404);
+      throw new Error ('User is required');
     }
     if (!hotel) {
-      res.status(404);
-      throw new Error("Hotel is required");
+      res.status (404);
+      throw new Error ('Hotel is required');
     }
-    const savedReview = await newReview.save();
-    res.status(201).json(savedReview);
+    const savedReview = await newReview.save ();
+    res.status (201).json (savedReview);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -111,31 +122,31 @@ const createReview = async (req, res, next) => {
  */
 const updateReview = async (req, res, next) => {
   try {
-    const { rating, description, user, hotel } = req.body;
+    const {rating, description, user, hotel} = req.body;
     const updateField = {};
 
     if (rating) updateField.rating = rating;
     if (description) updateField.description = description;
     if (user) updateField.user = user;
     if (hotel) updateField.hotel = hotel;
-    if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("No fields provided for update");
+    if (Object.keys (updateField).length === 0) {
+      res.status (400);
+      throw new Error ('No fields provided for update');
     }
 
-    const review = await Review.findByIdAndUpdate(
+    const review = await Review.findByIdAndUpdate (
       req.params.id,
-      { $set: updateField },
-      { new: true }
+      {$set: updateField},
+      {new: true}
     );
     if (!review) {
-      res.status(404);
-      throw new Error("Cannot Update The Review");
+      res.status (404);
+      throw new Error ('Cannot Update The Review');
     }
-    const savedReview = await review.save();
-    res.status(200).json(savedReview);
+    const savedReview = await review.save ();
+    res.status (200).json (savedReview);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -153,14 +164,14 @@ const updateReview = async (req, res, next) => {
  */
 const deleteReview = async (req, res, next) => {
   try {
-    const review = await Review.findByIdAndDelete(req.params.id);
+    const review = await Review.findByIdAndDelete (req.params.id);
     if (!review) {
-      res.status(404);
-      throw new Error("Cannot Delete The Review");
+      res.status (404);
+      throw new Error ('Cannot Delete The Review');
     }
-    res.status(200).json(review);
+    res.status (200).json (review);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
