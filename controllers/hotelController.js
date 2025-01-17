@@ -1,4 +1,5 @@
-const Hotel = require("../models/hotelModel");
+const Hotel = require ('../models/hotelModel');
+const pagination = require ('../utils/pagination');
 
 /**
  * @function getHotels
@@ -13,14 +14,25 @@ const Hotel = require("../models/hotelModel");
  */
 const getHotels = async (req, res, next) => {
   try {
-    const hotels = await Hotel.find().populate("location");
+    const {page, limit, skip} = pagination (req);
+    const hotels = await Hotel.find ()
+      .populate ('location')
+      .skip (skip)
+      .limit (limit);
+    const total = await Hotel.countDocuments ();
     if (!hotels) {
-      res.status(404);
-      throw new Error("There are no hotels available");
+      res.status (404);
+      throw new Error ('There are no hotels available');
     }
-    return res.status(200).json(hotels);
+    return res.status (200).json ({
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
+      data: hotels,
+    });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -38,15 +50,14 @@ const getHotels = async (req, res, next) => {
  */
 const getHotel = async (req, res, next) => {
   try {
-    const hotel = await Hotel.findById(req.params.id)
-      .populate("location")
+    const hotel = await Hotel.findById (req.params.id).populate ('location');
     if (!hotel) {
-      res.status(404);
-      throw new Error("There is no hotel by this ID");
+      res.status (404);
+      throw new Error ('There is no hotel by this ID');
     }
-    res.status(200).json(hotel);
+    res.status (200).json (hotel);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -74,7 +85,7 @@ const createHotel = async (req, res, next) => {
       location,
       review,
     } = req.body;
-    const newHotel = new Hotel({
+    const newHotel = new Hotel ({
       name,
       property_type,
       star_rating,
@@ -84,29 +95,29 @@ const createHotel = async (req, res, next) => {
       review,
     });
     if (!name) {
-      res.status(404);
-      throw new Error("Name is required");
+      res.status (404);
+      throw new Error ('Name is required');
     }
     if (!star_rating) {
-      res.status(404);
-      throw new Error("Star Rating is required");
+      res.status (404);
+      throw new Error ('Star Rating is required');
     }
     if (!num_rooms) {
-      res.status(404);
-      throw new Error("Number of Rooms is required");
+      res.status (404);
+      throw new Error ('Number of Rooms is required');
     }
     if (!images) {
-      res.status(404);
-      throw new Error("Images are required");
+      res.status (404);
+      throw new Error ('Images are required');
     }
     if (!location) {
-      res.status(404);
-      throw new Error("Location is required");
+      res.status (404);
+      throw new Error ('Location is required');
     }
-    const savedHotel = await newHotel.save();
-    res.status(200).json(savedHotel);
+    const savedHotel = await newHotel.save ();
+    res.status (200).json (savedHotel);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -124,8 +135,14 @@ const createHotel = async (req, res, next) => {
  */
 const updateHotel = async (req, res, next) => {
   try {
-    const { name, property_type, star_rating, num_rooms, images, location } =
-      req.body;
+    const {
+      name,
+      property_type,
+      star_rating,
+      num_rooms,
+      images,
+      location,
+    } = req.body;
     const updateField = {};
 
     if (name) updateField.name = name;
@@ -134,22 +151,22 @@ const updateHotel = async (req, res, next) => {
     if (num_rooms) updateField.num_rooms = num_rooms;
     if (images) updateField.images = images;
     if (location) updateField.location;
-    if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("Please provide fields to update");
+    if (Object.keys (updateField).length === 0) {
+      res.status (400);
+      throw new Error ('Please provide fields to update');
     }
-    const hotel = await Hotel.findByIdAndUpdate(
+    const hotel = await Hotel.findByIdAndUpdate (
       req.params.id,
-      { $set: updateField },
-      { new: true }
+      {$set: updateField},
+      {new: true}
     );
     if (!hotel) {
-      res.status(404);
-      throw new Error("There is no hotel by this ID");
+      res.status (404);
+      throw new Error ('There is no hotel by this ID');
     }
-    return res.status(200).json(hotel);
+    return res.status (200).json (hotel);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -167,14 +184,14 @@ const updateHotel = async (req, res, next) => {
  */
 const deleteHotel = async (req, res, next) => {
   try {
-    const hotel = await Hotel.findByIdAndDelete(req.params.id);
+    const hotel = await Hotel.findByIdAndDelete (req.params.id);
     if (!hotel) {
-      res.status(404);
-      throw new Error("There is no hotel by this ID");
+      res.status (404);
+      throw new Error ('There is no hotel by this ID');
     }
-    res.status(200).json(hotel);
+    res.status (200).json (hotel);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -193,20 +210,20 @@ const deleteHotel = async (req, res, next) => {
  */
 const getHotelsFromLocation = async (req, res, next) => {
   try {
-    const hotels = await Hotel.find({ location: req.params.id }).populate(
-      "review"
+    const hotels = await Hotel.find ({location: req.params.id}).populate (
+      'review'
     );
     if (!hotels.length === 0) {
-      res.status(404);
-      throw new Error("There are no hotels available in this location");
+      res.status (404);
+      throw new Error ('There are no hotels available in this location');
     }
-    res.status(200).json({
+    res.status (200).json ({
       success: true,
-      message: "Hotels retrieved successfully",
+      message: 'Hotels retrieved successfully',
       data: hotels,
     });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
