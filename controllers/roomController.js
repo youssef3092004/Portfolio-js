@@ -1,4 +1,5 @@
-const Room = require("../models/roomModel");
+const Room = require ('../models/roomModel');
+const pagination = require ('../utils/pagination');
 
 /**
  * @function getRooms
@@ -13,13 +14,25 @@ const Room = require("../models/roomModel");
  */
 const getRooms = async (req, res, next) => {
   try {
-    const rooms = await Room.find().populate("hotel amenities").exec();
+    const {page, limit, skip} = pagination (req);
+    const rooms = await Room.find ()
+      .populate ('hotel amenities')
+      .skip (skip)
+      .limit (limit)
+      .exec ();
+    const total = await Room.countDocuments ();
     if (rooms.length === 0) {
-      return next({ status: 404, message: "There are no rooms available" });
+      return next ({status: 404, message: 'There are no rooms available'});
     }
-    res.status(200).json(rooms);
+    res.status (200).json ({
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil (total / limit),
+      data: rooms,
+    });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -37,16 +50,16 @@ const getRooms = async (req, res, next) => {
  */
 const getRoom = async (req, res, next) => {
   try {
-    const room = await Room.findById(req.params.id)
-      .populate("hotel")
-      .populate("amenities");
+    const room = await Room.findById (req.params.id)
+      .populate ('hotel')
+      .populate ('amenities');
     if (!room) {
-      res.status(404);
-      throw new Error("There is no room by this ID");
+      res.status (404);
+      throw new Error ('There is no room by this ID');
     }
-    res.status(200).json(room);
+    res.status (200).json (room);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -63,9 +76,8 @@ const getRoom = async (req, res, next) => {
  */
 const createRoom = async (req, res, next) => {
   try {
-    const { room_type, room_number, price, status, hotel, amenities } =
-      req.body;
-    const newRoom = new Room({
+    const {room_type, room_number, price, status, hotel, amenities} = req.body;
+    const newRoom = new Room ({
       room_type,
       room_number,
       price,
@@ -74,33 +86,33 @@ const createRoom = async (req, res, next) => {
       amenities,
     });
     if (!room_type) {
-      res.status(404);
-      throw new Error("Room Type is required");
+      res.status (404);
+      throw new Error ('Room Type is required');
     }
     if (!room_number) {
-      res.status(404);
-      throw new Error("Room Number is required");
+      res.status (404);
+      throw new Error ('Room Number is required');
     }
     if (!price) {
-      res.status(404);
-      throw new Error("Price is required");
+      res.status (404);
+      throw new Error ('Price is required');
     }
     if (!status) {
-      res.status(404);
-      throw new Error("Status is required");
+      res.status (404);
+      throw new Error ('Status is required');
     }
     if (!hotel) {
-      res.status(404);
-      throw new Error("Hotel is required");
+      res.status (404);
+      throw new Error ('Hotel is required');
     }
     if (!amenities) {
-      res.status(404);
-      throw new Error("Amenities is required");
+      res.status (404);
+      throw new Error ('Amenities is required');
     }
-    const savedRoom = await newRoom.save();
-    res.status(201).json(savedRoom);
+    const savedRoom = await newRoom.save ();
+    res.status (201).json (savedRoom);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -117,8 +129,7 @@ const createRoom = async (req, res, next) => {
  */
 const updateRoom = async (req, res, next) => {
   try {
-    const { room_type, room_number, price, status, hotel, amenities } =
-      req.body;
+    const {room_type, room_number, price, status, hotel, amenities} = req.body;
     const updateField = {};
     if (room_type) updateField.room_type = room_type;
     if (room_number) updateField.room_number = room_number;
@@ -126,26 +137,25 @@ const updateRoom = async (req, res, next) => {
     if (status) updateField.status = status;
     if (hotel) updateField.hotel = hotel;
     if (amenities) updateField.amenities = amenities;
-    if (Object.keys(updateField).length === 0) {
-      res.status(404);
-      throw new Error("No fields provided for update");
+    if (Object.keys (updateField).length === 0) {
+      res.status (404);
+      throw new Error ('No fields provided for update');
     }
 
-    const room = await Room.findByIdAndUpdate(
+    const room = await Room.findByIdAndUpdate (
       req.params.id,
-      { $set: updateField },
-      { new: true }
+      {$set: updateField},
+      {new: true}
     );
     if (!room) {
-      res.status(404);
-      throw new Error("Cannot Update The User");
+      res.status (404);
+      throw new Error ('Cannot Update The User');
     }
-    res.status(200).json(room);
+    res.status (200).json (room);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
-
 
 /**
  * @function deleteRoom
@@ -162,14 +172,14 @@ const updateRoom = async (req, res, next) => {
  */
 const deleteRoom = async (req, res, next) => {
   try {
-    const room = await Room.findByIdAndDelete(req.params.id);
+    const room = await Room.findByIdAndDelete (req.params.id);
     if (!room) {
-      res.status(404);
-      throw new Error("No Room with This ID");
+      res.status (404);
+      throw new Error ('No Room with This ID');
     }
-    res.status(200).json("the room has been deleted Successfuly");
+    res.status (200).json ('the room has been deleted Successfuly');
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
