@@ -1,6 +1,7 @@
-const User = require("../models/userModel");
-const bcrypt = require("bcrypt");
-const { validatePassword, validatePhone, validateEmail } = require("../utils");
+const User = require ('../models/userModel');
+const bcrypt = require ('bcrypt');
+const {validatePassword, validatePhone, validateEmail} = require ('../utils');
+const pagination = require ('../utils/pagination');
 
 /**
  * @function getUsers
@@ -16,14 +17,22 @@ const { validatePassword, validatePhone, validateEmail } = require("../utils");
  */
 const getUsers = async (req, res, next) => {
   try {
-    const users = await User.find();
+    const {page, limit, skip} = pagination (req);
+    const users = await User.find ().skip (skip).limit (limit);
+    const total = await User.countDocuments ();
     if (!users || users.length === 0) {
-      res.status(404);
-      throw new Error("There are no users available");
+      res.status (404);
+      throw new Error ('There are no users available');
     }
-    return res.status(200).json(users);
+    return res.status (200).json ({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil (total / limit),
+      data: users,
+    });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -42,14 +51,14 @@ const getUsers = async (req, res, next) => {
  */
 const getUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById (req.params.id);
     if (!user) {
-      res.status(404);
-      throw new Error("There are no users available");
+      res.status (404);
+      throw new Error ('There are no users available');
     }
-    return res.status(200).json(user);
+    return res.status (200).json (user);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -67,8 +76,7 @@ const getUser = async (req, res, next) => {
  */
 const updateUser = async (req, res, next) => {
   try {
-    const { username, fname, lname, address, phone, email } =
-      req.body;
+    const {username, fname, lname, address, phone, email} = req.body;
 
     const updateField = {};
     if (username) {
@@ -84,39 +92,39 @@ const updateUser = async (req, res, next) => {
       updateField.address = address;
     }
     if (phone) {
-      if (!validatePhone(phone)) {
-        return res.status(400).send({
+      if (!validatePhone (phone)) {
+        return res.status (400).send ({
           success: false,
-          message: "Invalid phone number. It should be between 10 and 15 digits.",
+          message: 'Invalid phone number. It should be between 10 and 15 digits.',
         });
       }
       updateField.phone = phone;
     }
     if (email) {
       // Validate email
-      if (!validateEmail(email)) {
-        return res.status(400).send({
+      if (!validateEmail (email)) {
+        return res.status (400).send ({
           success: false,
-          message: "Invalid email format.",
+          message: 'Invalid email format.',
         });
       }
       updateField.email = email;
     }
 
-    if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("No fields provided for update");
+    if (Object.keys (updateField).length === 0) {
+      res.status (400);
+      throw new Error ('No fields provided for update');
     }
-    const user = await User.findByIdAndUpdate(req.params.id, updateField, {
+    const user = await User.findByIdAndUpdate (req.params.id, updateField, {
       new: true,
     });
     if (!user) {
-      res.status(400);
-      throw new Error("no user with this id" + req.params.id);
+      res.status (400);
+      throw new Error ('no user with this id' + req.params.id);
     }
-    res.status(200).json(user);
+    res.status (200).json (user);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -134,14 +142,14 @@ const updateUser = async (req, res, next) => {
  */
 const deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndDelete (req.params.id);
     if (!user) {
-      res.status(400);
-      throw new Error("no user with this id" + req.params.id);
+      res.status (400);
+      throw new Error ('no user with this id' + req.params.id);
     }
-    res.status(200).json({ msg: "the user has been deleted Successfuly" });
+    res.status (200).json ({msg: 'the user has been deleted Successfuly'});
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -162,55 +170,55 @@ const deleteUser = async (req, res, next) => {
  */
 const updatePassword = async (req, res) => {
   try {
-    console.log("User ID from token:", req.user.id);
+    console.log ('User ID from token:', req.user.id);
 
     // Fetch user by ID from the token
-    const user = await User.findById({_id: req.user.id});
+    const user = await User.findById ({_id: req.user.id});
     if (!user) {
-      return res.status(404).send({
+      return res.status (404).send ({
         success: false,
-        message: "User not found",
+        message: 'User not found',
       });
     }
     const {currentPassword, newPassword} = req.body;
     if (!currentPassword || !newPassword) {
-      return res.status(400).send({
+      return res.status (400).send ({
         success: false,
-        message: "Please provide current password and new password",
+        message: 'Please provide current password and new password',
       });
     }
 
-    if (!validatePassword(newPassword)) {
-      return res.status(400).send({
+    if (!validatePassword (newPassword)) {
+      return res.status (400).send ({
         success: false,
-        message: "New password must be at least 6 characters long, include a number, and a special character"
+        message: 'New password must be at least 6 characters long, include a number, and a special character',
       });
     }
-    
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    const isMatch = await bcrypt.compare (currentPassword, user.password);
     if (!isMatch) {
-      return res.status(401).send({
+      return res.status (401).send ({
         success: false,
-        error: "Current password is incorrect!",
+        error: 'Current password is incorrect!',
       });
     }
 
     // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const salt = await bcrypt.genSalt (10);
+    const hashedPassword = await bcrypt.hash (newPassword, salt);
 
-    user.password = hashedPassword;  
-    await user.save();
+    user.password = hashedPassword;
+    await user.save ();
 
-    res.status(200).send({
+    res.status (200).send ({
       success: true,
-      message: "Password updated successfully",
+      message: 'Password updated successfully',
     });
-  } catch(error) {
-    console.log(error);
-    res.status(500).send({
+  } catch (error) {
+    console.log (error);
+    res.status (500).send ({
       success: false,
-      message: "An error occurred while updating the password",
+      message: 'An error occurred while updating the password',
     });
   }
 };
