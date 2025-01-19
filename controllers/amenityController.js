@@ -1,4 +1,5 @@
 const Amenity = require("../models/ameniyModel");
+const pagination = require("../utils/pagination");
 
 /**
  * @route GET /api/amenities
@@ -13,13 +14,22 @@ const Amenity = require("../models/ameniyModel");
  */
 const getAmenities = async (req, res, next) => {
   try {
-    const amenities = await Amenity.find();
+    const { page, limit, skip } = pagination(req);
+
+    const amenities = await Amenity.find().skip(skip).limit(limit);
+    const total = await Amenity.countDocuments();
     if (!amenities || amenities.length === 0) {
       return res.status(404).json({
         message: "There are no amenities available",
       });
     }
-    return res.status(200).json(amenities);
+    return res.status(200).json({
+      page,
+      limit,
+      total,
+      totalPage : Math.ceil(total / limit),
+      data: amenities,
+    });
   } catch (error) {
     next(error);
   }
@@ -158,10 +168,29 @@ const deleteAmenity = async (req, res, next) => {
   }
 };
 
+const deleteAllAmenitys = async (req, res, next) => {
+  try {
+    const result = await Amenity.deleteMany(); // Deletes all documents in the Amenity collection
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        message: "There are no amenities to delete",
+      });
+    }
+
+    res.status(200).json({
+      message: `${result.deletedCount} amenities removed successfully`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAmenities,
   getAmenity,
   createAmenity,
   updateAmenity,
   deleteAmenity,
+  deleteAllAmenitys,
 };
