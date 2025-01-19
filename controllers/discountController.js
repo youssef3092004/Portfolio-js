@@ -1,4 +1,5 @@
-const Discount = require("../models/discountModel");
+const Discount = require ('../models/discountModel');
+const pagination = require ('../utils/pagination');
 
 /**
  * @function getDiscounts
@@ -12,23 +13,33 @@ const Discount = require("../models/discountModel");
  */
 const getDiscounts = async (req, res, next) => {
   try {
-    const discounts = await Discount.find();
-    if (!discounts) {
-      res.status(404);
-      throw new Error("There are no discounts available");
+    const {page, limit, skip} = pagination (req);
+
+    const discounts = await Discount.find ().skip (skip).limit (limit);
+    const total = await Discount.countDocuments ();
+
+    if (!discounts || discounts.length === 0) {
+      return res
+        .status (404)
+        .json ({message: 'There are no discounts available'});
     }
-    const validDiscounts = discounts.filter((discount) => {
-      return discount.status === "Active";
+    const validDiscounts = discounts.filter (discount => {
+      return discount.status === 'Active';
     });
 
     if (validDiscounts.length === 0) {
-      res.status(404);
-      throw new Error("No valid discounts found");
+      return res.status (404).json ({message: 'No valid discounts found'});
     }
 
-    return res.status(200).json(validDiscounts);
+    return res.status (200).json ({
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil (total / limit),
+      data: validDiscounts,
+    });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -45,14 +56,14 @@ const getDiscounts = async (req, res, next) => {
  */
 const getDiscount = async (req, res, next) => {
   try {
-    const discount = await Discount.findById(req.params.id);
+    const discount = await Discount.findById (req.params.id);
     if (!discount) {
-      res.status(404);
-      throw new Error("There is no discount by this ID");
+      res.status (404);
+      throw new Error ('There is no discount by this ID');
     }
-    return res.status(200).json(discount);
+    return res.status (200).json (discount);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -70,8 +81,8 @@ const getDiscount = async (req, res, next) => {
  */
 const createDiscount = async (req, res, next) => {
   try {
-    const { code, discount, start_date, end_date, status, maxUse } = req.body;
-    const newDiscount = new Discount({
+    const {code, discount, start_date, end_date, status, maxUse} = req.body;
+    const newDiscount = new Discount ({
       code,
       discount,
       start_date,
@@ -80,29 +91,29 @@ const createDiscount = async (req, res, next) => {
       maxUse,
     });
     if (!code) {
-      res.status(400);
-      throw new Error("Code is required");
+      res.status (400);
+      throw new Error ('Code is required');
     }
     if (!discount) {
-      res.status(400);
-      throw new Error("Discount is required");
+      res.status (400);
+      throw new Error ('Discount is required');
     }
     if (!start_date) {
-      res.status(400);
-      throw new Error("Start Date is required");
+      res.status (400);
+      throw new Error ('Start Date is required');
     }
     if (!end_date) {
-      res.status(400);
-      throw new Error("End Date is required");
+      res.status (400);
+      throw new Error ('End Date is required');
     }
     if (!maxUse) {
-      res.status(400);
-      throw new Error("Max Use is required");
+      res.status (400);
+      throw new Error ('Max Use is required');
     }
-    const savedDiscount = await newDiscount.save();
-    return res.status(201).json(savedDiscount);
+    const savedDiscount = await newDiscount.save ();
+    return res.status (201).json (savedDiscount);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -121,7 +132,7 @@ const createDiscount = async (req, res, next) => {
  */
 const updateDiscount = async (req, res, next) => {
   try {
-    const { code, discount, start_date, end_date, status, maxUse } = req.body;
+    const {code, discount, start_date, end_date, status, maxUse} = req.body;
     const updateField = {};
     if (code) updateField.code = code;
     if (discount) updateField.discount = discount;
@@ -129,17 +140,17 @@ const updateDiscount = async (req, res, next) => {
     if (end_date) updateField.end_date = end_date;
     if (status) updateField.status = status;
     if (maxUse) updateField.maxUse = maxUse;
-    if (Object.keys(updateField).length === 0) {
-      res.status(400);
-      throw new Error("Please provide fields to update");
+    if (Object.keys (updateField).length === 0) {
+      res.status (400);
+      throw new Error ('Please provide fields to update');
     }
     for (let i in updateField) {
-      if (!updateField[i] || updateField[i] === "") {
-        res.status(400);
-        throw new Error(`${updateField[i]} is required`);
+      if (!updateField[i] || updateField[i] === '') {
+        res.status (400);
+        throw new Error (`${updateField[i]} is required`);
       }
     }
-    const diiscount = await Discount.findByIdAndUpdate(
+    const diiscount = await Discount.findByIdAndUpdate (
       req.params.id,
       updateField,
       {
@@ -148,14 +159,14 @@ const updateDiscount = async (req, res, next) => {
       }
     );
     if (!diiscount) {
-      res.status(404);
-      throw new Error("There is no discount by this ID");
+      res.status (404);
+      throw new Error ('There is no discount by this ID');
     }
-    diiscount.updated_at = Date.now();
-    const savedDiscount = await diiscount.save();
-    return res.status(200).json(savedDiscount);
+    diiscount.updated_at = Date.now ();
+    const savedDiscount = await diiscount.save ();
+    return res.status (200).json (savedDiscount);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -172,14 +183,14 @@ const updateDiscount = async (req, res, next) => {
  */
 const deleteDiscount = async (req, res, next) => {
   try {
-    const discount = await Discount.findByIdAndDelete(req.params.id);
+    const discount = await Discount.findByIdAndDelete (req.params.id);
     if (!discount) {
-      res.status(404);
-      throw new Error("There is no discount by this ID");
+      res.status (404);
+      throw new Error ('There is no discount by this ID');
     }
-    return res.status(200).json(discount);
+    return res.status (200).json (discount);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -193,25 +204,25 @@ const deleteDiscount = async (req, res, next) => {
  * This function increments the `usedCount` of a discount and checks if the maximum usage limit has been reached. If the limit is reached, the
  * discount status is set to "Inactive". If the discount is not found or if it has already reached its maximum usage, an error is thrown.
  */
-const incrementDiscountUsage = async (discountId) => {
+const incrementDiscountUsage = async discountId => {
   try {
-    const discount = await Discount.findById(discountId);
+    const discount = await Discount.findById (discountId);
     if (!discount) {
-      throw new Error("Discount not found");
+      throw new Error ('Discount not found');
     }
     if (discount.usedCount >= discount.maxUse) {
-      throw new Error("Discount has reached its maximum usage");
+      throw new Error ('Discount has reached its maximum usage');
     }
     discount.usedCount += 1;
     if (discount.usedCount == discount.maxUse) {
-      discount.status = "Inactive";
+      discount.status = 'Inactive';
     }
-    discount.updated_at = Date.now();
-    await discount.save();
-    console.log("Discount usage increased");
+    discount.updated_at = Date.now ();
+    await discount.save ();
+    console.log ('Discount usage increased');
     return discount;
   } catch (error) {
-    console.error("Error incrementing discount usage:", error.message);
+    console.error ('Error incrementing discount usage:', error.message);
     throw error;
   }
 };
@@ -228,25 +239,25 @@ const incrementDiscountUsage = async (discountId) => {
  */
 const updateDiscountStatuses = async () => {
   try {
-    const discounts = await Discount.find({ status: "Active" });
+    const discounts = await Discount.find ({status: 'Active'});
     if (discounts.length === 0) {
-      throw new Error("Discounts not found");
+      throw new Error ('Discounts not found');
     }
     const update = discounts
-      .map((discount) => {
-        if (Date.now() > discount.end_date) {
-          discount.status = "Inactive";
-          discount.updated_at = Date.now();
-          return discount.save();
+      .map (discount => {
+        if (Date.now () > discount.end_date) {
+          discount.status = 'Inactive';
+          discount.updated_at = Date.now ();
+          return discount.save ();
         }
       })
-      .filter(Boolean);
-    await Promise.all(update);
-    console.log(
+      .filter (Boolean);
+    await Promise.all (update);
+    console.log (
       `Checked and updated discount statuses for ${discounts.length} discounts`
     );
   } catch (error) {
-    console.error("Error updating discount statuses:", error.message);
+    console.error ('Error updating discount statuses:', error.message);
   }
 };
 
@@ -260,17 +271,17 @@ const updateDiscountStatuses = async () => {
  * This function checks if the given discount is active or inactive. If the discount is inactive, an error is thrown. If it is found to be
  * active, no action is taken.
  */
-const checkDiscountActiveOrInactive = async (discountId) => {
+const checkDiscountActiveOrInactive = async discountId => {
   try {
-    const discount = await Discount.findById(discountId);
+    const discount = await Discount.findById (discountId);
     if (!discount) {
-      throw new Error("Discount not found");
+      throw new Error ('Discount not found');
     }
-    if (discount.status === "Inactive") {
-      throw new Error("Discount is expired and cannot be used");
+    if (discount.status === 'Inactive') {
+      throw new Error ('Discount is expired and cannot be used');
     }
   } catch (error) {
-    console.error("Error checking discount status:", error.message);
+    console.error ('Error checking discount status:', error.message);
     throw error;
   }
 };
