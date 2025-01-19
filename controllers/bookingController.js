@@ -1,6 +1,7 @@
 const Booking = require("../models/bookingModel");
 const Room = require("../models/roomModel");
 const Discount = require("../models/discountModel");
+const pagination = require("../utils/pagination");
 
 const {
   incrementDiscountUsage,
@@ -23,18 +24,26 @@ const {
  */
 const getBookings = async (req, res, next) => {
   try {
+    const { page, limit, skip } = pagination(req)
     const bookings = await Booking.find()
       .populate("user")
       .populate("hotel")
       .populate("room")
       .populate("discount")
+      .skip(skip)
+      .limit(limit)
       .exec();
+      const total = await Booking.countDocuments();
     if (!bookings || bookings.length === 0) {
       return res
         .status(404)
-        .json({ message: "There is no bookings by this ID" });
+        .json({message: "There is no bookings by this ID"});
     }
     res.status(200).json({
+      page,
+      limit,
+      total,
+      totalPage: Math.ceil(total / limit),
       success: true,
       message: "Booking retrieved successfully.",
       data: bookings,
