@@ -1,5 +1,6 @@
 const Hotel = require ('../models/hotelModel');
 const pagination = require ('../utils/pagination');
+const client = require ('../config/redisConfig');
 
 /**
  * @function getHotels
@@ -14,7 +15,13 @@ const pagination = require ('../utils/pagination');
  */
 const getHotels = async (req, res, next) => {
   try {
-    const {page, limit, skip} = pagination (req);
+    const { page, limit, skip } = pagination(req);
+    const redisKey = `hotels:page:${page}:limit:${limit}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const hotels = await Hotel.find ()
       .populate ('location')
       .skip (skip)
@@ -24,6 +31,8 @@ const getHotels = async (req, res, next) => {
       res.status (404);
       throw new Error ('There are no hotels available');
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(hotels));
+    console.log('Returning data from MongoDB and caching it in Redis');
     return res.status (200).json ({
       page,
       limit,
@@ -50,12 +59,20 @@ const getHotels = async (req, res, next) => {
  */
 const getHotel = async (req, res, next) => {
   try {
+    const redisKey = `${req.params.id}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const hotel = await Hotel.findById (req.params.id).populate ('location');
     if (!hotel) {
       res.status (404);
       throw new Error ('There is no hotel by this ID');
     }
-    res.status (200).json (hotel);
+    await client.setEx(redisKey, 3600, JSON.stringify(hotel));
+    console.log('Returning data from MongoDB and caching it in Redis');
+    res.status(200).json(hotel);
   } catch (error) {
     next (error);
   }
@@ -114,7 +131,10 @@ const createHotel = async (req, res, next) => {
       res.status (404);
       throw new Error ('Location is required');
     }
-    const savedHotel = await newHotel.save ();
+    const savedHotel = await newHotel.save();
+    const redisKey = `${savedHotel._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(savedHotel));
+    console.log('Caching new hotel in Redis');
     res.status (200).json (savedHotel);
   } catch (error) {
     next (error);
@@ -164,6 +184,9 @@ const updateHotel = async (req, res, next) => {
       res.status (404);
       throw new Error ('There is no hotel by this ID');
     }
+    const redisKey = `${hotel._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(hotel));
+    console.log('Caching updated hotel in Redis');
     return res.status (200).json (hotel);
   } catch (error) {
     next (error);
@@ -189,6 +212,9 @@ const deleteHotel = async (req, res, next) => {
       res.status (404);
       throw new Error ('There is no hotel by this ID');
     }
+    const redisKey = `${req.params.id}`;
+    await client.del(redisKey);
+    console.log('Deleting hotel from Redis');
     res.status (200).json (hotel);
   } catch (error) {
     next (error);
