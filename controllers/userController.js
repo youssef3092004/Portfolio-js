@@ -2,6 +2,7 @@ const User = require ('../models/userModel');
 const bcrypt = require ('bcrypt');
 const {validatePassword, validatePhone, validateEmail} = require ('../utils');
 const pagination = require ('../utils/pagination');
+const client = require('../config/redisConfig');
 
 /**
  * @function getUsers
@@ -17,13 +18,21 @@ const pagination = require ('../utils/pagination');
  */
 const getUsers = async (req, res, next) => {
   try {
-    const {page, limit, skip} = pagination (req);
+    const { page, limit, skip } = pagination(req);
+    const redisKey = `users:page:${page}:limit:${limit}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const users = await User.find ().skip (skip).limit (limit);
     const total = await User.countDocuments ();
     if (!users || users.length === 0) {
       res.status (404);
       throw new Error ('There are no users available');
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(users));
+    console.log('Returning data from MongoDB and caching it in Redis');
     return res.status (200).json ({
       page,
       limit,
@@ -51,11 +60,19 @@ const getUsers = async (req, res, next) => {
  */
 const getUser = async (req, res, next) => {
   try {
+    const redisKey = `user:${req.params.id}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const user = await User.findById (req.params.id);
     if (!user) {
       res.status (404);
       throw new Error ('There are no users available');
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(user));
+    console.log('Returning data from MongoDB and caching it in Redis');
     return res.status (200).json (user);
   } catch (error) {
     next (error);
@@ -122,6 +139,9 @@ const updateUser = async (req, res, next) => {
       res.status (400);
       throw new Error ('no user with this id' + req.params.id);
     }
+    const redisKey = `user:${user._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(user));
+    console.log('Caching updated user in Redis');
     res.status (200).json (user);
   } catch (error) {
     next (error);
@@ -147,6 +167,9 @@ const deleteUser = async (req, res, next) => {
       res.status (400);
       throw new Error ('no user with this id' + req.params.id);
     }
+    const redisKey = `user:${req.params.id}`;
+    await client.del(redisKey);
+    console.log('Deleting user from Redis');
     res.status (200).json ({msg: 'the user has been deleted Successfuly'});
   } catch (error) {
     next (error);
