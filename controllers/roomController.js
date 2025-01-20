@@ -1,5 +1,6 @@
 const Room = require ('../models/roomModel');
 const pagination = require ('../utils/pagination');
+const client = require('../config/redisConfig');
 
 /**
  * @function getRooms
@@ -14,7 +15,13 @@ const pagination = require ('../utils/pagination');
  */
 const getRooms = async (req, res, next) => {
   try {
-    const {page, limit, skip} = pagination (req);
+    const { page, limit, skip } = pagination(req);
+    const redisKey = `rooms:page:${page}:limit:${limit}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const rooms = await Room.find ()
       .populate ('hotel amenities')
       .skip (skip)
@@ -24,6 +31,8 @@ const getRooms = async (req, res, next) => {
     if (rooms.length === 0) {
       return next ({status: 404, message: 'There are no rooms available'});
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(rooms));
+    console.log('Returning data from MongoDB and caching it in Redis');
     res.status (200).json ({
       page,
       limit,
@@ -50,6 +59,12 @@ const getRooms = async (req, res, next) => {
  */
 const getRoom = async (req, res, next) => {
   try {
+    const redisKey = `${req.params.id}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const room = await Room.findById (req.params.id)
       .populate ('hotel')
       .populate ('amenities');
@@ -57,6 +72,8 @@ const getRoom = async (req, res, next) => {
       res.status (404);
       throw new Error ('There is no room by this ID');
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(room));
+    console.log('Returning data from MongoDB and caching it in Redis');
     res.status (200).json (room);
   } catch (error) {
     next (error);
@@ -77,14 +94,6 @@ const getRoom = async (req, res, next) => {
 const createRoom = async (req, res, next) => {
   try {
     const {room_type, room_number, price, status, hotel, amenities} = req.body;
-    const newRoom = new Room ({
-      room_type,
-      room_number,
-      price,
-      status,
-      hotel,
-      amenities,
-    });
     if (!room_type) {
       res.status (404);
       throw new Error ('Room Type is required');
@@ -109,7 +118,18 @@ const createRoom = async (req, res, next) => {
       res.status (404);
       throw new Error ('Amenities is required');
     }
-    const savedRoom = await newRoom.save ();
+    const newRoom = new Room ({
+      room_type,
+      room_number,
+      price,
+      status,
+      hotel,
+      amenities,
+    });
+    const savedRoom = await newRoom.save();
+    const redisKey = `${savedRoom._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(savedRoom));
+    console.log('Caching new room in Redis');
     res.status (201).json (savedRoom);
   } catch (error) {
     next (error);
@@ -147,10 +167,9 @@ const updateRoom = async (req, res, next) => {
       {$set: updateField},
       {new: true}
     );
-    if (!room) {
-      res.status (404);
-      throw new Error ('Cannot Update The User');
-    }
+    const redisKey = `${room._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(room));
+    console.log('Caching updated room in Redis');
     res.status (200).json (room);
   } catch (error) {
     next (error);
@@ -177,7 +196,9 @@ const deleteRoom = async (req, res, next) => {
       res.status (404);
       throw new Error ('No Room with This ID');
     }
-    res.status (200).json ('the room has been deleted Successfuly');
+    await client.del(req.params.id);
+    console.log('Deleting room from Redis');
+    res.status (200).json ({message: 'the room has been deleted Successfuly'});
   } catch (error) {
     next (error);
   }
