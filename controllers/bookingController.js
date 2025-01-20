@@ -2,6 +2,7 @@ const Booking = require("../models/bookingModel");
 const Room = require("../models/roomModel");
 const Discount = require("../models/discountModel");
 const pagination = require("../utils/pagination");
+const client = require ('../config/redisConfig');
 
 const {
   incrementDiscountUsage,
@@ -25,6 +26,12 @@ const {
 const getBookings = async (req, res, next) => {
   try {
     const { page, limit, skip } = pagination(req)
+    const redisKey = `bookings:page:${page}:limit:${limit}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log("Using cached data");
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const bookings = await Booking.find()
       .populate("user")
       .populate("hotel")
@@ -39,6 +46,8 @@ const getBookings = async (req, res, next) => {
         .status(404)
         .json({message: "There is no bookings by this ID"});
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(bookings));
+    console.log("Returning data from MongoDB and caching it in Redis");
     res.status(200).json({
       page,
       limit,
@@ -70,6 +79,12 @@ const getBookings = async (req, res, next) => {
  */
 const getBooking = async (req, res, next) => {
   try {
+    const redisKey = `${req.params.id}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log("Using cached data");
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const booking = await Booking.findById(req.params.id)
       .populate("user")
       .populate("hotel")
@@ -81,6 +96,8 @@ const getBooking = async (req, res, next) => {
         .status(404)
         .json({ message: "There is no booking by this ID" });
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(booking));
+    console.log("Returning data from MongoDB and caching it in Redis");
     res.status(200).json({
       success: true,
       message: "Booking retrieved successfully.",
@@ -160,6 +177,9 @@ const createBooking = async (req, res, next) => {
     });
 
     const savedBooking = await newBooking.save();
+    const redisKey = `${savedBooking._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(savedBooking));
+    console.log("Caching new booking in Redis");
     res.status(200).json({
       success: true,
       message: "Booking successfully Created.",
@@ -250,6 +270,9 @@ const updateBooking = async (req, res, next) => {
         .status(404)
         .json({ message: `No booking found with this ID: ${req.params.id}` });
     }
+    const redisKey = `${booking._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(booking));
+    console.log("Caching updated booking in Redis");
     res.status(200).json({
       success: true,
       message: "Booking successfully updated.",
@@ -280,6 +303,9 @@ const deleteBooking = async (req, res, next) => {
       res.status(400);
       throw new Error("no booking with this id" + req.params.id);
     }
+    const redisKey = `${req.params.id}`;
+    await client.del(redisKey);
+    console.log("Deleting booking from Redis"); 
     res.status(200).json({
       success: true,
       message: "Booking successfully Deleted.",
