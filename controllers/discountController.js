@@ -1,5 +1,6 @@
 const Discount = require ('../models/discountModel');
 const pagination = require ('../utils/pagination');
+const client = require ('../config/redisConfig');
 
 /**
  * @function getDiscounts
@@ -14,6 +15,12 @@ const pagination = require ('../utils/pagination');
 const getDiscounts = async (req, res, next) => {
   try {
     const {page, limit, skip} = pagination (req);
+    const redisKey = `discount:page:${page}:limit:${limit}`;
+    const cachedDiscounts = await client.get (redisKey);
+    if (cachedDiscounts) {
+      console.log ('Returning data from Redis');
+      return res.status (200).json (JSON.parse (cachedDiscounts));
+    }
 
     const discounts = await Discount.find ().skip (skip).limit (limit);
     const total = await Discount.countDocuments ();
@@ -30,6 +37,9 @@ const getDiscounts = async (req, res, next) => {
     if (validDiscounts.length === 0) {
       return res.status (404).json ({message: 'No valid discounts found'});
     }
+
+    await client.setEx (redisKey, 3600, JSON.stringify (validDiscounts));
+    console.log ('Returning data from MongoDB and caching it in Redis');
 
     return res.status (200).json ({
       page,
@@ -56,11 +66,19 @@ const getDiscounts = async (req, res, next) => {
  */
 const getDiscount = async (req, res, next) => {
   try {
+    const redisKey = `${req.params.id}`;
+    const cachedDiscount = await client.get (redisKey);
+    if (cachedDiscount) {
+      console.log ('Using cached data');
+      return res.status (200).json (JSON.parse (cachedDiscount));
+    }
     const discount = await Discount.findById (req.params.id);
     if (!discount) {
       res.status (404);
       throw new Error ('There is no discount by this ID');
     }
+    await client.setEx (redisKey, 3600, JSON.stringify (discount));
+    console.log ('Returning data from MongoDB and caching it in Redis');
     return res.status (200).json (discount);
   } catch (error) {
     next (error);
@@ -111,6 +129,9 @@ const createDiscount = async (req, res, next) => {
       throw new Error ('Max Use is required');
     }
     const savedDiscount = await newDiscount.save ();
+    const redisKey = `${savedDiscount._id}`;
+    await client.setEx (redisKey, 3600, JSON.stringify (savedDiscount));
+    console.log ('Caching new discount in Redis');
     return res.status (201).json (savedDiscount);
   } catch (error) {
     next (error);
@@ -163,7 +184,10 @@ const updateDiscount = async (req, res, next) => {
       throw new Error ('There is no discount by this ID');
     }
     diiscount.updated_at = Date.now ();
-    const savedDiscount = await diiscount.save ();
+    const savedDiscount = await diiscount.save();
+    const redisKey = `${savedDiscount._id}`;
+    await client.setEx (redisKey, 3600, JSON.stringify (savedDiscount));
+    console.log ('Caching updated discount in Redis');
     return res.status (200).json (savedDiscount);
   } catch (error) {
     next (error);
@@ -188,6 +212,9 @@ const deleteDiscount = async (req, res, next) => {
       res.status (404);
       throw new Error ('There is no discount by this ID');
     }
+    const redisKey = `${req.params.id}`;
+    await client.del (redisKey);
+    console.log ('Deleting discount from Redis');
     return res.status (200).json (discount);
   } catch (error) {
     next (error);
