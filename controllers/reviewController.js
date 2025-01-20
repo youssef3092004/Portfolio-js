@@ -1,5 +1,6 @@
 const Review = require ('../models/reviewModel');
 const pagination = require ('../utils/pagination');
+const client = require ('../config/redisConfig');
 
 /**
  * @function getReviews
@@ -15,6 +16,12 @@ const pagination = require ('../utils/pagination');
 const getReviews = async (req, res, next) => {
   try {
     const {page, limit, skip} = pagination (req);
+    const redisKey = `reviews:page:${page}:limit:${limit}`;
+    const cachedData = await client.get (redisKey);
+    if (cachedData) {
+      console.log ('Using cached data');
+      return res.status (200).json (JSON.parse (cachedData));
+    }
     const reviews = await Review.find ()
       .populate ('user')
       .populate ('hotel')
@@ -27,6 +34,8 @@ const getReviews = async (req, res, next) => {
         .status (404)
         .json ({message: 'There are no reviews available'});
     }
+    await client.setEx (redisKey, 3600, JSON.stringify (reviews));
+    console.log ('Returning data from MongoDB and caching it in Redis');
     res.status (200).json ({
       page,
       limit,
@@ -53,6 +62,12 @@ const getReviews = async (req, res, next) => {
  */
 const getReview = async (req, res, next) => {
   try {
+    const redisKey = `${req.params.id}`;
+    const cachedData = await client.get(redisKey);
+    if (cachedData) {
+      console.log('Using cached data');
+      return res.status(200).json(JSON.parse(cachedData));
+    }
     const review = await Review.findById (req.params.id)
       .populate ('user')
       .populate ('hotel')
@@ -60,6 +75,8 @@ const getReview = async (req, res, next) => {
     if (!review || review.length === 0) {
       return res.status (404).json ({message: 'There is no review by this ID'});
     }
+    await client.setEx(redisKey, 3600, JSON.stringify(review));
+    console.log('Returning data from MongoDB and caching it in Redis');
     res.status (200).json (review);
   } catch (error) {
     next (error);
@@ -102,7 +119,10 @@ const createReview = async (req, res, next) => {
       res.status (404);
       throw new Error ('Hotel is required');
     }
-    const savedReview = await newReview.save ();
+    const savedReview = await newReview.save();
+    const redisKey = `${savedReview._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(savedReview));
+    console.log('Caching new review in Redis');
     res.status (201).json (savedReview);
   } catch (error) {
     next (error);
@@ -143,7 +163,10 @@ const updateReview = async (req, res, next) => {
       res.status (404);
       throw new Error ('Cannot Update The Review');
     }
-    const savedReview = await review.save ();
+    const savedReview = await review.save();
+    const redisKey = `${savedReview._id}`;
+    await client.setEx(redisKey, 3600, JSON.stringify(savedReview));
+    console.log('Caching updated review in Redis');
     res.status (200).json (savedReview);
   } catch (error) {
     next (error);
@@ -169,6 +192,9 @@ const deleteReview = async (req, res, next) => {
       res.status (404);
       throw new Error ('Cannot Delete The Review');
     }
+    const redisKey = `${req.params.id}`;
+    await client.del(redisKey);
+    console.log('Deleting review from Redis');
     res.status (200).json (review);
   } catch (error) {
     next (error);
