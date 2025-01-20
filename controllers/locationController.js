@@ -1,6 +1,6 @@
 const Location = require ('../models/locationModel');
 const pagination = require ('../utils/pagination');
-
+const client = require ('../config/redisConfig');
 /**
  * @function getLocations
  * @description Fetches all locations from the database.
@@ -15,11 +15,24 @@ const pagination = require ('../utils/pagination');
 const getLocations = async (req, res, next) => {
   try {
     const {page, limit, skip} = pagination (req);
+    const redisKey = `locations:page:${page}:limit:${limit}`;
+    const cachedData = await client.get (redisKey);
+    if (cachedData) {
+      console.log ('Using cached data');
+      return res.status (200).json (JSON.parse (cachedData));
+    }
     const locations = await Location.find ().skip (skip).limit (limit);
     const total = await Location.countDocuments ();
+
     if (!locations || locations.length === 0) {
-      res.status (404).json ({message: 'There are no locations available'});
+      return res
+        .status (404)
+        .json ({message: 'There are no locations available'});
     }
+
+    await client.setEx (redisKey, 3600, JSON.stringify (locations)); // Cache for 1 hour (3600 seconds)
+    console.log ('Returning data from MongoDB and caching it in Redis');
+
     return res.status (200).json ({
       page,
       limit,
@@ -47,11 +60,21 @@ const getLocations = async (req, res, next) => {
  */
 const getLocation = async (req, res, next) => {
   try {
+    const redisKey = `${req.params.id}`;
+    const cachedData = await client.get (redisKey);
+    if (cachedData) {
+      console.log ('Using cached data');
+      return res.status (200).json (JSON.parse (cachedData));
+    }
     const location = await Location.findById (req.params.id);
     if (!location) {
       res.status (404);
       throw new Error ('There is no location by this ID');
     }
+
+    await client.setEx (redisKey, 3600, JSON.stringify (location));
+    console.log ('Returning data from MongoDB and caching it in Redis');
+
     return res.status (200).json (location);
   } catch (error) {
     next (error);
@@ -102,6 +125,9 @@ const createLocation = async (req, res, next) => {
       zip_code,
     });
     const savedLocation = await newLocation.save ();
+    const redisKey = `${savedLocation._id}`;
+    await client.setEx (redisKey, 3600, JSON.stringify (savedLocation));
+    console.log ('Caching new location in Redis');
     return res.status (200).json (savedLocation);
   } catch (error) {
     next (error);
@@ -144,6 +170,9 @@ const updateLocation = async (req, res, next) => {
       res.status (404);
       throw new Error ('There is no location by this ID');
     }
+    const redisKey = `${location._id}`;
+    await client.setEx (redisKey, 3600, JSON.stringify (location));
+    console.log ('Caching updated location in Redis');
     return res.status (200).json (location);
   } catch (error) {
     next (error);
@@ -168,6 +197,9 @@ const deleteLocation = async (req, res, next) => {
       res.status (404);
       throw new Error ('There is no location by this ID');
     }
+    const redisKey = `${location._id}`;
+    await client.del (redisKey);
+    console.log ('Deleting location from Redis');
     return res.status (200).json (location);
   } catch (error) {
     next (error);
