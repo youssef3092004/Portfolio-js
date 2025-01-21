@@ -1,6 +1,6 @@
 const User = require ('../models/userModel');
 const bcrypt = require ('bcrypt');
-const {validatePassword, validatePhone, validateEmail} = require ('../utils');
+const {validatePassword, validatePhone, validateEmail} = require ('../utils/validations');
 const pagination = require ('../utils/pagination');
 const client = require('../config/redisConfig');
 
