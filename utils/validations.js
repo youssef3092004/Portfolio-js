@@ -1,5 +1,5 @@
 /**
- * @file utils.js
+ * @file validations.js
  * @description This file contains utility functions for validating user inputs such as phone numbers, email addresses, and passwords.
  * It ensures that the input data follows the correct format before further processing.
  * 
