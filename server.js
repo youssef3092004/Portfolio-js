@@ -42,7 +42,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(errorHandler);
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://bookify-api-pi.vercel.app'],
+  origin: ['http://localhost:3000', 'https://bookify-portfolio.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -59,6 +59,8 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", resetPassword);
+console.log(swaggerDocs);  // Ensure the docs are being generated correctly
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use('/api-docs', express.static('node_modules/swagger-ui-dist'));
 
