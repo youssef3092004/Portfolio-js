@@ -37,7 +37,7 @@ const swaggerOptions = {
     },
     security: [
       {
-        BeareAuth: [],
+        BearerAuth: [],
       },
     ],
     tags: [
