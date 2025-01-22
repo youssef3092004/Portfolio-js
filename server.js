@@ -61,6 +61,12 @@ app.use("/api/auth", authRoutes);
 app.use("/api/auth", resetPassword);
 console.log(swaggerDocs);  // Ensure the docs are being generated correctly
 
+// Prevent caching for Swagger UI
+app.use('/api-docs', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
   swaggerUrl: 'https://bookify-portfolio.vercel.app/swagger.json'  // Specify your swagger JSON URL explicitly
 }));
