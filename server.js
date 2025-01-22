@@ -67,12 +67,16 @@ app.use('/api-docs', express.static('node_modules/swagger-ui-dist'));
 app.get("/", (req, res) => {
   res.send("Welcome to home page");
 });
-
+// Serve Swagger JSON at /swagger.json
+app.get('/swagger.json', (req, res) => {
+  res.json(swaggerDocs);
+});
 //todo every Hour
 corn.schedule("0 * * * *", () => {
   console.log("Running scheduled job to update discount statuses...");
   updateDiscountStatuses();
 });
+
 
 //todo every 5 seconds for checking
 // setInterval(() => {
