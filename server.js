@@ -66,10 +66,13 @@ app.use('/api-docs', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
-
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
-  swaggerUrl: 'https://bookify-portfolio.vercel.app/swagger.json'  // Specify your swagger JSON URL explicitly
+app.use('/api-docs', (req, res, next) => {
+  console.log('Swagger UI being accessed');
+  next();
+}, swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  swaggerUrl: 'https://bookify-portfolio.vercel.app/swagger.json'
 }));
+
 app.get("/", (req, res) => {
   res.send("Welcome to home page");
 });
