@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const JWT = require('jsonwebtoken');
 
 const { validatePassword, validateEmail, validatePhone } = require('../utils/validations');
+const passport = require('passport');
 
 /**
  * @function registerController
@@ -142,7 +143,67 @@ const loginController = async (req, res, next) => {
   }
 };
 
+/**
+ * @function googleLogin
+ * @description Initiates the Google login process by redirecting the user to Google's OAuth 2.0 login page.
+ * @route GET /api/auth/google
+ * @access Public
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express middleware function.
+ * @returns {void} - Redirects the user to Google's OAuth 2.0 login page.
+ *
+ * This function starts the authentication flow with Google by requesting access to the user's profile and email. 
+ * It utilizes Passport.js for OAuth 2.0 integration.
+ */
+const googleLogin = passport.authenticate('google', {
+   scope: ['profile', 'email'] 
+  })
+
+/**
+ * @function googleCallback
+ * @description Handles the callback from Google after user authentication and logs the user in.
+ * @route GET /api/auth/google/callback
+ * @access Public
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express middleware function.
+ * @returns {void} - Redirects the user to the home page with a success or error message.
+ * @throws {Error} - If there is an error during authentication or user login.
+ *
+ * This function is invoked when Google redirects the user back to the application after authentication.
+ * It validates the authentication response and logs the user in. If successful, the user is redirected to the home page.
+ * In case of an error, the user is redirected with an appropriate error message.
+ */
+const googleCallback = (req, res, next) => {
+  passport.authenticate('google', (err, user) => {
+    // Error handling during authentication
+    if (err) {
+      console.error('Authentication error:', err.message);
+      return res.redirect('/?error=Authentication failed'); // Redirect with error message
+    }
+
+    if (!user) {
+      // If no user was found in the database
+      return res.redirect('/?error=User not found')
+    }
+
+    // Successful login
+    req.login(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login error:', loginErr.message);
+        return res.redirect('/?error=Login failed'); 
+      }
+
+      // Redirect user with success message
+      return res.redirect('/?message=Logged in with Google successfully');
+    });
+  })(req, res, next);
+};
+
 module.exports = {
   registerController,
   loginController,
+  googleLogin,
+  googleCallback
 };
