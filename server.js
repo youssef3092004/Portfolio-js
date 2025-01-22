@@ -72,6 +72,9 @@ app.use('/api-docs', (req, res, next) => {
 }, swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
   swaggerUrl: 'https://bookify-portfolio.vercel.app/swagger.json'
 }));
+const path = require('path');
+app.use('/swagger-ui', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to home page");
