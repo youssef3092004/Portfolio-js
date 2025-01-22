@@ -2,6 +2,8 @@ const express = require('express');
 const {
     registerController,
     loginController,
+    googleLogin,
+    googleCallback
 } = require('../controllers/authControllers');
 
 const router = express.Router();
@@ -98,5 +100,37 @@ router.post('/register', registerController);
  *         description: Internal server error.
  */
 router.post('/login', loginController);
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   get:
+ *     summary: Start Google login
+ *     tags: [Authentication]
+ *     description: Initiates the Google login process by redirecting the user to Google's OAuth 2.0 login page.
+ *     responses:
+ *       302:
+ *         description: Redirects to Google's OAuth 2.0 login page.
+ */
+router.get('/google', googleLogin);
+
+/**
+ * @swagger
+ * /api/auth/google/callback:
+ *   get:
+ *     summary: Google login callback
+ *     tags: [Authentication]
+ *     description: Handles the callback from Google after user authentication and logs the user in.
+ *     responses:
+ *       200:
+ *         description: Redirects to the home page with a success message after successful login.
+ *       302:
+ *         description: Redirects to the home page.
+ *       400:
+ *         description: Redirects with an error message if authentication fails.
+ *       500:
+ *         description: Internal server error.
+ */
+router.get('/google/callback', googleCallback);
 
 module.exports = router;
