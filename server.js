@@ -38,7 +38,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(errorHandler);
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://bookify-webstack.vercel.app'],
+  origin: ['http://localhost:3000', 'https://bookify-api-pi.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
@@ -73,6 +73,7 @@ corn.schedule("0 * * * *", () => {
 //   console.log("Running scheduled job to update discount statuses...");
 //   updateDiscountStatuses();
 // }, 5000);
+console.log('Node.js Version:', process.version);
 
 app.listen(DB_PORT, () => {
   console.log(`Server is listening on port ${DB_PORT}`);
