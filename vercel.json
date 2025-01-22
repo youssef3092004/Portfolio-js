@@ -6,5 +6,11 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api-docs",
+      "destination": "/api-docs/index.html"
+    }
   ]
 }
