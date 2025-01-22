@@ -22,7 +22,7 @@ const swaggerOptions = {
         url: 'http://localhost:3000', // Development URL
       },
       {
-        url: 'https://bookify-webstack.vercel.app', // Production URL
+        url: 'https://bookify-api-pi.vercel.app', // Production URL
       },
     ],
     components: {
