@@ -1,8 +1,13 @@
-const express = require("express");
 require("dotenv").config();
+const express = require("express");
 const connectDB = require("./config/db");
 const errorHandler = require("./middleware/errorHandler");
 const corn = require("node-cron");
+const session = require('express-session');
+const passport = require("passport");
+const { swaggerUi, swaggerDocs } = require("./config/swaggerConfig");
+const { updateDiscountStatuses } = require("./controllers/discountController");
+
 const discountRoute = require("./routes/discountRoute");
 const bookingRoute = require("./routes/bookingRoute");
 const amenityRoute = require("./routes/amenityRoute");
@@ -13,14 +18,22 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const roomRoutes = require("./routes/roomRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
-const { updateDiscountStatuses } = require("./controllers/discountController");
-const { swaggerUi, swaggerDocs } = require("./config/swaggerConfig");
+const resetPassword = require("./routes/resetPasswordRoutes");
+
 const DB_PORT = process.env.DB_PORT || 3000;
 
 connectDB();
 
 const app = express();
 app.use(express.json());
+// Configure session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(errorHandler);
 
 // setup Routes
@@ -34,10 +47,11 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", resetPassword);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.get("/", (req, res) => {
-  res.send("now you in a Hello page");
+  res.send("Welcome to home page");
 });
 
 //todo every Hour
@@ -53,6 +67,6 @@ corn.schedule("0 * * * *", () => {
 // }, 5000);
 
 app.listen(DB_PORT, () => {
-  console.log(`Server is running on http://localhost:${DB_PORT}`);
+  console.log(`Server is listening on port ${DB_PORT}`);
   console.log('Swagger Docs available at http://localhost:3000/api-docs')
 });
