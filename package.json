@@ -35,6 +35,7 @@
     "redis": "^4.7.0",
     "stripe": "^17.5.0",
     "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-dist": "^5.18.2",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^11.0.3"
   },
