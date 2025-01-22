@@ -32,7 +32,11 @@ app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {
+    // Ensure cookie is secure in production (HTTPS)
+    secure: process.env.ENV === 'production',
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
