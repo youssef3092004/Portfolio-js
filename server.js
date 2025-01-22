@@ -56,6 +56,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", resetPassword);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api-docs', express.static('node_modules/swagger-ui-dist'));
 
 app.get("/", (req, res) => {
   res.send("Welcome to home page");
