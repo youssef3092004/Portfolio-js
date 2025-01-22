@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const JWT = require('jsonwebtoken');
 
 const { validatePassword, validateEmail, validatePhone } = require('../utils/validations');
+const passport = require('passport');
 
 /**
  * @function registerController
@@ -143,66 +144,66 @@ const loginController = async (req, res, next) => {
 };
 
 /**
- * @function resetPassword
- * @description Resets the user's password based on the provided email and new password.
- * @route POST /api/users/resetPassword
+ * @function googleLogin
+ * @description Initiates the Google login process by redirecting the user to Google's OAuth 2.0 login page.
+ * @route GET /api/auth/google
  * @access Public
- * @param {string} req.body.email - The email of the user whose password is being reset.
- * @param {string} req.body.newPassword - The new password to set for the user.
- * @returns {JSON} JSON object containing a success message upon successful password reset.
- * @throws {Error} If the user does not exist or there is an error while resetting the password.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express middleware function.
+ * @returns {void} - Redirects the user to Google's OAuth 2.0 login page.
  *
- * This function allows a user to reset their password by providing their email and a new password.
- * If the email exists in the database, the password will be updated with the new hashed password.
+ * This function starts the authentication flow with Google by requesting access to the user's profile and email. 
+ * It utilizes Passport.js for OAuth 2.0 integration.
  */
-const  resetPassword = async (req, res) => {
-  try {
-      const {email, newPassword} = req.body;
+const googleLogin = passport.authenticate('google', {
+   scope: ['profile', 'email'] 
+  })
 
-      if (!email || !newPassword) {
-        return res.status(400).send({
-          success: false,
-          message: "Please provide all fields"
-        });
+/**
+ * @function googleCallback
+ * @description Handles the callback from Google after user authentication and logs the user in.
+ * @route GET /api/auth/google/callback
+ * @access Public
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express middleware function.
+ * @returns {void} - Redirects the user to the home page with a success or error message.
+ * @throws {Error} - If there is an error during authentication or user login.
+ *
+ * This function is invoked when Google redirects the user back to the application after authentication.
+ * It validates the authentication response and logs the user in. If successful, the user is redirected to the home page.
+ * In case of an error, the user is redirected with an appropriate error message.
+ */
+const googleCallback = (req, res, next) => {
+  passport.authenticate('google', (err, user) => {
+    // Error handling during authentication
+    if (err) {
+      console.error('Authentication error:', err.message);
+      return res.redirect('/?error=Authentication failed'); // Redirect with error message
+    }
+
+    if (!user) {
+      // If no user was found in the database
+      return res.redirect('/?error=User not found')
+    }
+
+    // Successful login
+    req.login(user, (loginErr) => {
+      if (loginErr) {
+        console.error('Login error:', loginErr.message);
+        return res.redirect('/?error=Login failed'); 
       }
 
-      if (!validatePassword(newPassword)) {
-        return res.status(400).send({
-          success: false,
-          message: "New password must be at least 6 characters long, include a number, and a special character"
-        });
-      }
-
-      const user = await User.findOne({ email: email });
-      if (!user) {
-        return res.status(404).send({
-          success: false,
-          message: "User not found"
-        })
-      }
-      // Hash user password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-      user.password = hashedPassword;
-      await user.save();
-
-      res.status(200).send({
-        success: true,
-        message: "Password reset successfully!",
-      });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Erorr in reset password API",
-      error
+      // Redirect user with success message
+      return res.redirect('/?message=Logged in with Google successfully');
     });
-  }
+  })(req, res, next);
 };
 
 module.exports = {
   registerController,
   loginController,
-  resetPassword,
+  googleLogin,
+  googleCallback
 };
