@@ -61,9 +61,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/auth", resetPassword);
 console.log(swaggerDocs);  // Ensure the docs are being generated correctly
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-app.use('/api-docs', express.static('node_modules/swagger-ui-dist'));
-
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  swaggerUrl: 'https://bookify-portfolio.vercel.app/swagger.json'  // Specify your swagger JSON URL explicitly
+}));
 app.get("/", (req, res) => {
   res.send("Welcome to home page");
 });
