@@ -5,6 +5,7 @@ const errorHandler = require("./middleware/errorHandler");
 const corn = require("node-cron");
 const session = require('express-session');
 const passport = require("passport");
+require('./config/passportSetup');
 const { swaggerUi, swaggerDocs } = require("./config/swaggerConfig");
 const { updateDiscountStatuses } = require("./controllers/discountController");
 
