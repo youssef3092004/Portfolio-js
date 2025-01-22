@@ -19,7 +19,10 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'https://bookify-webstack.vercel.app',
+        url: 'http://localhost:3000', // Development URL
+      },
+      {
+        url: 'https://bookify-hotels.vercel.app/', // Production URL
       },
     ],
     components: {
