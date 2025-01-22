@@ -2,7 +2,8 @@ const express = require('express');
 const {
     registerController,
     loginController,
-    resetPassword
+    googleLogin,
+    googleCallback
 } = require('../controllers/authControllers');
 
 const router = express.Router();
@@ -102,42 +103,34 @@ router.post('/login', loginController);
 
 /**
  * @swagger
- * /api/auth/resetPassword:
- *   post:
- *     summary: Reset password with email
+ * /api/auth/google:
+ *   get:
+ *     summary: Start Google login
  *     tags: [Authentication]
- *     description: Allows a user to reset their password by providing their email address.
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *                 description: The user's email address for password reset.
- *               newPassword:
- *                 type: string
- *                 description: The new password for the user.
+ *     description: Initiates the Google login process by redirecting the user to Google's OAuth 2.0 login page.
+ *     responses:
+ *       302:
+ *         description: Redirects to Google's OAuth 2.0 login page.
+ */
+router.get('/google', googleLogin);
+
+/**
+ * @swagger
+ * /api/auth/google/callback:
+ *   get:
+ *     summary: Google login callback
+ *     tags: [Authentication]
+ *     description: Handles the callback from Google after user authentication and logs the user in.
  *     responses:
  *       200:
- *         description: A success message indicating the password has been successfully reset.
+ *         description: Redirects to the home page with a success message after successful login.
+ *       302:
+ *         description: Redirects to the home page.
  *       400:
- *         description: Bad request. Missing or invalid email.
- *       401:
- *         description: Unauthorized. Missing or invalid token.
- *       404:
- *         description: User not found with the provided email.
+ *         description: Redirects with an error message if authentication fails.
  *       500:
  *         description: Internal server error.
  */
-router.post("/resetPassword", resetPassword);
-
+router.get('/google/callback', googleCallback);
 
 module.exports = router;
