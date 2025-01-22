@@ -15,7 +15,7 @@ const swaggerOptions = {
     },
     externalDocs: {
       description: 'Contact Youssef Ahmed',
-      url: 'mailto:#',
+      url: 'youssefahmedabdelkader25@gmail.com',
     },
     servers: [
       {
