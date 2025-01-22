@@ -20,6 +20,7 @@ const roomRoutes = require("./routes/roomRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
 const resetPassword = require("./routes/resetPasswordRoutes");
+const cors = require('cors');
 
 const DB_PORT = process.env.DB_PORT || 3000;
 
@@ -36,6 +37,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(errorHandler);
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://bookify-webstack.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // setup Routes
 app.use("/api/discounts", discountRoute);
