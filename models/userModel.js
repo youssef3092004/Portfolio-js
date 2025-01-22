@@ -8,6 +8,11 @@ const userSchema = new mongoose.Schema({
     unique: true,
     immutable: true,
   },
+  googleId: { 
+    type: String,
+    required: false,
+    unique: true
+  },
   username: {
     type: String,
     required: true,
@@ -26,12 +31,12 @@ const userSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    required: true,
+    required: false,
     maxlength: 100,
   },
   phone: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
     maxlength: 15,
   },
@@ -43,7 +48,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: false,
     maxlength: 100,
   },
   created_at: {
