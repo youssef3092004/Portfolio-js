@@ -20,6 +20,7 @@ const roomRoutes = require("./routes/roomRoutes");
 const userRoutes = require("./routes/userRoutes");
 const authRoutes = require("./routes/authRoutes");
 const resetPassword = require("./routes/resetPasswordRoutes");
+const cors = require('cors');
 const path = require('path');
 
 const DB_PORT = process.env.DB_PORT || 3000;
@@ -41,6 +42,11 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(errorHandler);
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://bookify-portfolio.vercel.app'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 // setup Routes
 app.use("/api/discounts", discountRoute);
@@ -54,18 +60,29 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", resetPassword);
+console.log(swaggerDocs);  // Ensure the docs are being generated correctly
 
+// Prevent caching for Swagger UI
+app.use('/api-docs', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store');
+  next();
+});
 app.use('/api-docs', (req, res, next) => {
   console.log('Swagger UI being accessed');
   next();
-}, swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
+}, swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+  swaggerUrl: 'https://bookify-portfolio.vercel.app/swagger.json'
+}));
 app.use('/swagger-ui', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to home page");
 });
-
+// Serve Swagger JSON at /swagger.json
+app.get('/swagger.json', (req, res) => {
+  res.json(swaggerDocs);
+});
 //todo every Hour
 corn.schedule("0 * * * *", () => {
   console.log("Running scheduled job to update discount statuses...");
