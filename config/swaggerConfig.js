@@ -19,7 +19,9 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: process.env.NODE_ENV === 'production'
+        ? 'https://bookify-portfolio.vercel.app'
+        : 'http://localhost:3000',
       },
     ],
     components: {
@@ -34,7 +36,7 @@ const swaggerOptions = {
     },
     security: [
       {
-        BeareAuth: [],
+        BearerAuth: [],
       },
     ],
     tags: [
