@@ -1,5 +1,5 @@
-const Amenity = require("../models/ameniyModel");
-const pagination = require("../utils/pagination");
+const Amenity = require ('../models/ameniyModel');
+const pagination = require ('../utils/pagination');
 const client = require ('../config/redisConfig');
 
 /**
@@ -15,31 +15,29 @@ const client = require ('../config/redisConfig');
  */
 const getAmenities = async (req, res, next) => {
   try {
-    const { page, limit, skip } = pagination(req);
-    const redisKey = `amenities:page:${page}:limit:${limit}`;
-    const cachedData = await client.get(redisKey);
+    const {page, limit, skip} = pagination (req);
+    const cacheKey = `amenities:page:${page}:limit:${limit}`;
+    const cachedData = await client.get (cacheKey);
     if (cachedData) {
-      console.log("Using cached data");
-      return res.status(200).json(JSON.parse(cachedData));
+      return res.status (200).json (JSON.parse (cachedData));
     }
-    const amenities = await Amenity.find().skip(skip).limit(limit);
-    const total = await Amenity.countDocuments();
-    if (!amenities || amenities.length === 0) {
-      return res.status(404).json({
-        message: "There are no amenities available",
+    const amenities = await Amenity.find ().skip (skip).limit (limit).exec ();
+    const total = await Amenity.countDocuments ();
+    if (amenities.length === 0) {
+      return res.status (404).json ({
+        message: 'There are no amenities available',
       });
     }
-    await client.setEx(redisKey, 3600, JSON.stringify(amenities)); // Cache for 1 hour (3600 seconds)
-    console.log("Returning data from MongoDB and caching it in Redis");
-    return res.status(200).json({
+    await client.setEx (cacheKey, 3600, JSON.stringify (amenities));
+    res.status (200).json ({
       page,
       limit,
       total,
-      totalPage : Math.ceil(total / limit),
+      totalPage: Math.ceil (total / limit),
       data: amenities,
     });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -59,22 +57,22 @@ const getAmenities = async (req, res, next) => {
 const getAmenity = async (req, res, next) => {
   try {
     const redisKey = `${req.params.id}`;
-    const cachedData = await client.get(redisKey);
+    const cachedData = await client.get (redisKey);
     if (cachedData) {
-      console.log("Using cached data");
-      return res.status(200).json(JSON.parse(cachedData));
+      console.log ('Using cached data');
+      return res.status (200).json (JSON.parse (cachedData));
     }
-    const amenity = await Amenity.findById(req.params.id);
+    const amenity = await Amenity.findById (req.params.id);
     if (!amenity) {
       return res
-        .status(404)
-        .json({ message: "There are no amenities available" });
+        .status (404)
+        .json ({message: 'There are no amenities available'});
     }
-    await client.setEx(redisKey, 3600, JSON.stringify(amenity));
-    console.log("Returning data from MongoDB and caching it in Redis");
-    res.status(200).json(amenity);
+    await client.setEx (redisKey, 3600, JSON.stringify (amenity));
+    console.log ('Returning data from MongoDB and caching it in Redis');
+    res.status (200).json (amenity);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -94,27 +92,27 @@ const getAmenity = async (req, res, next) => {
  */
 const createAmenity = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
-    const requiredFields = { name, description };
+    const {name, description} = req.body;
+    const requiredFields = {name, description};
     for (let i in requiredFields) {
       if (!requiredFields[i]) {
-        res.status(400);
-        throw new Error(
-          `${i.charAt(0).toUpperCase() + i.slice(1)} is required`
+        res.status (400);
+        throw new Error (
+          `${i.charAt (0).toUpperCase () + i.slice (1)} is required`
         );
       }
     }
-    const newAmenity = new Amenity({
+    const newAmenity = new Amenity ({
       name,
       description,
     });
-    const savedAmenity = await newAmenity.save();
+    const savedAmenity = await newAmenity.save ();
     const redisKey = `${savedAmenity._id}`;
-    await client.setEx(redisKey, 3600, JSON.stringify(savedAmenity));
-    console.log("Caching new amenity in Redis");
-    res.status(201).json(savedAmenity);
+    await client.setEx (redisKey, 3600, JSON.stringify (savedAmenity));
+    console.log ('Caching new amenity in Redis');
+    res.status (201).json (savedAmenity);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -136,27 +134,27 @@ const createAmenity = async (req, res, next) => {
  */
 const updateAmenity = async (req, res, next) => {
   try {
-    const { name, description } = req.body;
+    const {name, description} = req.body;
     const updateField = {};
     if (name) updateField.name = name;
     if (description) updateField.description = description;
     if (!name) {
-      return res.status(400).json({ message: "Name is required" });
+      return res.status (400).json ({message: 'Name is required'});
     }
     if (!description) {
-      return res.status(400).json({ message: "Description is required" });
+      return res.status (400).json ({message: 'Description is required'});
     }
-    const updatedAmenity = await Amenity.findByIdAndUpdate(
+    const updatedAmenity = await Amenity.findByIdAndUpdate (
       req.params.id,
-      { $set: updateField },
-      { new: true }
+      {$set: updateField},
+      {new: true}
     );
     const redisKey = `${updatedAmenity._id}`;
-    await client.setEx(redisKey, 3600, JSON.stringify(updatedAmenity));
-    console.log("Caching updated amenity in Redis");
-    res.status(200).json(updatedAmenity);
+    await client.setEx (redisKey, 3600, JSON.stringify (updatedAmenity));
+    console.log ('Caching updated amenity in Redis');
+    res.status (200).json (updatedAmenity);
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
@@ -175,43 +173,43 @@ const updateAmenity = async (req, res, next) => {
  */
 const deleteAmenity = async (req, res, next) => {
   try {
-    const amenity = await Amenity.findById(req.params.id);
+    const amenity = await Amenity.findById (req.params.id);
     if (!amenity) {
-      return res.status(404).json({
-        message: "There is no amenity by this ID",
+      return res.status (404).json ({
+        message: 'There is no amenity by this ID',
       });
     }
-    await Amenity.findByIdAndDelete(req.params.id);
+    await Amenity.findByIdAndDelete (req.params.id);
     const redisKey = `${req.params.id}`;
-    await client.del(redisKey);
-    console.log("Deleted amenity from Redis");
-    res.status(200).json({
-      message: "Amenity removed",
+    await client.del (redisKey);
+    console.log ('Deleted amenity from Redis');
+    res.status (200).json ({
+      message: 'Amenity removed',
     });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
 const deleteAllAmenitys = async (req, res, next) => {
   try {
-    const result = await Amenity.deleteMany(); // Deletes all documents in the Amenity collection
+    const result = await Amenity.deleteMany ();
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({
-        message: "There are no amenities to delete",
+      return res.status (404).json ({
+        message: 'There are no amenities to delete',
       });
     }
-    const redisKeys = await client.keys("amenities:*");
-    redisKeys.forEach(async (key) => {
-      await client.del(key);
+    const redisKeys = await client.keys ('amenities:*');
+    redisKeys.forEach (async key => {
+      await client.del (key);
     });
-    console.log("Deleted all amenities from Redis");
-    res.status(200).json({
+    console.log ('Deleted all amenities from Redis');
+    res.status (200).json ({
       message: `${result.deletedCount} amenities removed successfully`,
     });
   } catch (error) {
-    next(error);
+    next (error);
   }
 };
 
