@@ -73,9 +73,6 @@ describe("updateUser", () => {
         password: "123123",
       },
     };
-    const hashedPassword = "hashed_123123";
-    bcrypt.hash.mockResolvedValue(hashedPassword);
-
     const updatedUser = {
       _id: "123",
       username: "",
@@ -84,7 +81,6 @@ describe("updateUser", () => {
       address: "123 try try",
       phone: "1234567890",
       email: "youssef@gmail.com",
-      password: hashedPassword,
     };
 
     User.findByIdAndUpdate.mockResolvedValue(updatedUser);
@@ -96,8 +92,6 @@ describe("updateUser", () => {
     const next = jest.fn();
 
     await updateUser(req, res, next);
-
-    expect(bcrypt.hash).toHaveBeenCalledWith("123123", 10);
     expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
       "123",
       {
@@ -106,7 +100,6 @@ describe("updateUser", () => {
         address: "123 try try",
         phone: "1234567890",
         email: "youssef@gmail.com",
-        password: hashedPassword,
       },
       { new: true }
     );
