@@ -1,70 +1,79 @@
-const { describe, it, expect } = require('@jest/globals');
-const { getLocation } = require("../../controllers/locationController");
-const Location = require("../../models/locationModel");
+const {describe, it, expect} = require ('@jest/globals');
+const {getLocation} = require ('../../controllers/locationController');
+const Location = require ('../../models/locationModel');
+const client = require ('../../config/redisConfig');
 
-jest.mock("../../models/locationModel");
+jest.mock ('../../models/locationModel', () => ({
+  findById: jest.fn (),
+}));
 
-describe("getLocation Controller", () => {
-  it("should return a 404 error if location is not found", async () => {
-    // Mock Location.findById to return null (no location found)
-    Location.findById.mockResolvedValue(null);
+jest.mock ('../../config/redisConfig', () => ({
+  get: jest.fn (),
+  setEx: jest.fn (),
+}));
 
-    const req = { params: { id: "123" } }; // simulate an ID parameter
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const next = jest.fn();
-
-    await getLocation(req, res, next);
-
-    // Check if the status 404 is called
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(next).toHaveBeenCalledWith(expect.any(Error)); // Ensure the error is passed to next
+describe ('getLocation Controller', () => {
+  beforeEach (() => {
+    jest.clearAllMocks ();
+    client.get.mockClear ();
+    client.get.mockResolvedValue (null);
   });
 
-  it("should return the location if found", async () => {
-    const mockLocation = {
-      id: "123",
-      country: "EGYPT",
-      city: "Cairo",
-      address: "123 try try try",
-      zip_code: 1231,
-    };
+  it ('should return a location if found', async () => {
+    const mockLocation = {id: '1', country: 'USA', city: 'New York'};
+    Location.findById.mockResolvedValue (mockLocation);
 
-    // Mock Location.findById to return the mock location
-    Location.findById.mockResolvedValue(mockLocation);
-
-    const req = { params: { id: "123" } };
+    const req = {params: {id: '1'}};
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
+    const next = jest.fn ();
 
-    await getLocation(req, res, next);
+    await getLocation (req, res, next);
 
-    // Check if status 200 is called and the correct location is returned
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(mockLocation);
+    expect (Location.findById).toHaveBeenCalledWith ('1');
+    expect (res.status).toHaveBeenCalledWith (200);
+    expect (res.json).toHaveBeenCalledWith (mockLocation);
   });
 
-  it("should return a 500 error if there is a database error", async () => {
-    // Mock Location.findById to throw an error
-    Location.findById.mockRejectedValue(new Error("Database error"));
+  it ('should return cached data if available', async () => {
+    const cachedData = JSON.stringify ({
+      id: '1',
+      country: 'USA',
+      city: 'New York',
+    });
+    client.get.mockResolvedValue (cachedData);
 
-    const req = { params: { id: "12345" } };
+    const req = {params: {id: '1'}};
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
+    const next = jest.fn ();
 
-    await getLocation(req, res, next);
+    await getLocation (req, res, next);
 
-    // Ensure next() is called with an error
-    expect(next).toHaveBeenCalledWith(expect.any(Error)); // This ensures the error is passed to the next handler
-    expect(res.status).not.toHaveBeenCalled(); // The status code is set by the error handler
+    expect (client.get).toHaveBeenCalledWith ('1');
+    expect (res.status).toHaveBeenCalledWith (200);
+    expect (res.json).toHaveBeenCalledWith (JSON.parse (cachedData));
+    expect (Location.findById).not.toHaveBeenCalled ();
   });
 
+  it ('should call next with an error if an exception occurs', async () => {
+    Location.findById.mockRejectedValue (new Error ('Database error'));
+
+    const req = {params: {id: '1'}};
+    const res = {
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
+    };
+    const next = jest.fn ();
+
+    await getLocation (req, res, next);
+
+    expect (Location.findById).toHaveBeenCalledWith ('1');
+    expect (next).toHaveBeenCalledWith (expect.any (Error));
+    expect (res.status).not.toHaveBeenCalled ();
+  });
 });
