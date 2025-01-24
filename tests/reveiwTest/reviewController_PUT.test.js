@@ -1,81 +1,119 @@
-const { describe, it, expect } = require("@jest/globals");
-const { updateReview } = require("../../controllers/reviewController");
-const Review = require("../../models/reviewModel");
+const {describe, it, expect, afterEach} = require ('@jest/globals');
+const {updateReview} = require ('../../controllers/reviewController');
+const Review = require ('../../models/reviewModel');
+const client = require ('../../config/redisConfig');
 
-jest.mock("../../models/reviewModel");
+jest.mock ('../../models/reviewModel', () => ({
+  findByIdAndUpdate: jest.fn (),
+  save: jest.fn (),
+}));
 
-describe("updateReview Controller", () => {
-  it("should return a 400 error if no fields are provided for update", async () => {
-    const req = {
-      body: {},
-      params: { id: "123" },
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const next = jest.fn();
-    await updateReview(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "No fields provided for update" })
-    );
+jest.mock ('../../config/redisConfig', () => ({
+  setEx: jest.fn (),
+}));
+
+describe ('updateReview Controller', () => {
+  afterEach (() => {
+    jest.clearAllMocks ();
   });
 
-  it("should return a 404 error if the review is not found", async () => {
-    const req = {
-      body: { rating: 5 },
-      params: { id: "123" },
-    };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const next = jest.fn();
-    Review.findByIdAndUpdate.mockResolvedValue(null);
-    await updateReview(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(next).toHaveBeenCalledWith(
-      expect.objectContaining({ message: "Cannot Update The Review" })
-    );
-  });
-
-  it("should return a 200 status and the updated review if the update is successful", async () => {
+  it ('should return a 200 status and the updated review if the update is successful', async () => {
     const mockReview = {
-      _id: "123",
+      _id: '1',
       rating: 5,
-      description: "Great stay!",
-      user: "User 1",
-      hotel: "Hotel 1",
+      description: 'Great stay!',
+      user: 'User1',
+      hotel: 'Hotel1',
     };
+    Review.findByIdAndUpdate.mockResolvedValue (mockReview);
+    mockReview.save = jest.fn ().mockResolvedValue (mockReview);
+
     const req = {
-      body: { rating: 4 },
-      params: { id: "123" },
+      params: {id: '1'},
+      body: {rating: 5, description: 'Great stay!'},
     };
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
-    Review.findByIdAndUpdate.mockResolvedValue(mockReview);
-    await updateReview(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(mockReview);
+    const next = jest.fn ();
+
+    await updateReview (req, res, next);
+
+    expect (Review.findByIdAndUpdate).toHaveBeenCalledWith (
+      '1',
+      {$set: {rating: 5, description: 'Great stay!'}},
+      {new: true}
+    );
+    expect (mockReview.save).toHaveBeenCalled ();
+    expect (client.setEx).toHaveBeenCalledWith (
+      mockReview._id,
+      3600,
+      JSON.stringify (mockReview)
+    );
+    expect (res.status).toHaveBeenCalledWith (200);
+    expect (res.json).toHaveBeenCalledWith (mockReview);
   });
 
-  it("should handle unexpected errors and pass them to the next middleware", async () => {
-    const error = new Error("Unexpected error");
+  it ('should return a 400 error if no fields are provided for update', async () => {
+    const req = {params: {id: '1'}, body: {}};
+    const res = {
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
+    };
+    const next = jest.fn ();
+
+    await updateReview (req, res, next);
+
+    expect (res.status).toHaveBeenCalledWith (400);
+    expect (next).toHaveBeenCalledWith (expect.any (Error));
+  });
+
+  it ('should return a 404 error if the review is not found', async () => {
+    Review.findByIdAndUpdate.mockResolvedValue (null);
+
     const req = {
-      body: { rating: 5 },
-      params: { id: "123" },
+      params: {id: '1'},
+      body: {rating: 5, description: 'Great stay!'},
     };
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
-    Review.findByIdAndUpdate.mockRejectedValue(error);
-    await updateReview(req, res, next);
-    expect(next).toHaveBeenCalledWith(error);
+    const next = jest.fn ();
+
+    await updateReview (req, res, next);
+
+    expect (Review.findByIdAndUpdate).toHaveBeenCalledWith (
+      '1',
+      {$set: {rating: 5, description: 'Great stay!'}},
+      {new: true}
+    );
+    expect (res.status).toHaveBeenCalledWith (404);
+    expect (next).toHaveBeenCalledWith (expect.any (Error));
+  });
+
+  it ('should call next with an error if an exception occurs', async () => {
+    Review.findByIdAndUpdate.mockRejectedValue (new Error ('Database error'));
+
+    const req = {
+      params: {id: '1'},
+      body: {rating: 5, description: 'Great stay!'},
+    };
+    const res = {
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
+    };
+    const next = jest.fn ();
+
+    await updateReview (req, res, next);
+
+    expect (Review.findByIdAndUpdate).toHaveBeenCalledWith (
+      '1',
+      {$set: {rating: 5, description: 'Great stay!'}},
+      {new: true}
+    );
+    expect (next).toHaveBeenCalledWith (expect.any (Error));
+    expect (res.status).not.toHaveBeenCalled ();
   });
 });
