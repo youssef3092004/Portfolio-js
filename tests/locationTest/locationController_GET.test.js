@@ -1,94 +1,60 @@
-const { describe, it, expect } = require("@jest/globals");
+const {describe, it, expect, afterEach} = require ('@jest/globals');
+const {getLocation} = require ('../../controllers/locationController');
+const Location = require ('../../models/locationModel');
+const client = require ('../../config/redisConfig');
 
-const { getLocations } = require("../../controllers/locationController");
-const Location = require("../../models/locationModel");
+jest.mock ('../../models/locationModel', () => ({
+  findById: jest.fn (),
+}));
 
-jest.mock("../../models/locationModel", () => {
-  return {
-    find: jest.fn(),
-  };
-});
+jest.mock ('../../config/redisConfig', () => ({
+  get: jest.fn (),
+  setEx: jest.fn (),
+}));
 
-describe("getLocations Controller", () => {
-  it("should return a 404 error if no locations are found", async () => {
-    Location.find.mockResolvedValue(null);
-
-    const req = {};
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const next = jest.fn();
-
-    await getLocations(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
+describe ('getLocation Controller', () => {
+  afterEach (() => {
+    jest.clearAllMocks ();
   });
 
-  it("should return locations when found", async () => {
-    const mockLocations = [
-      {
-        id: "1",
-        country: "USA",
-        city: "New York",
-        address: "123 NY St",
-        zip_code: 10001,
-      },
-      {
-        id: "2",
-        country: "Canada",
-        city: "Toronto",
-        address: "456 Toronto St",
-        zip_code: 23456,
-      },
-    ];
-    Location.find.mockResolvedValue(mockLocations);
+  it ('should return a location if found', async () => {
+    const mockLocation = {id: '1', country: 'USA', city: 'New York'};
+    Location.findById.mockResolvedValue (mockLocation);
 
-    const req = {};
+    const req = {params: {id: '1'}};
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
+    const next = jest.fn ();
 
-    await getLocations(req, res, next);
+    await getLocation (req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(mockLocations);
+    expect (Location.findById).toHaveBeenCalledWith ('1');
+    expect (res.status).toHaveBeenCalledWith (200);
+    expect (res.json).toHaveBeenCalledWith (mockLocation);
   });
 
-  it("should return a 404 error if no locations are found (empty array)", async () => {
-    Location.find.mockResolvedValue([]);
+  it ('should return cached data if available', async () => {
+    const cachedData = JSON.stringify ({
+      id: '1',
+      country: 'USA',
+      city: 'New York',
+    });
+    client.get.mockResolvedValue (cachedData);
 
-    const req = {};
+    const req = {params: {id: '1'}};
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
+    const next = jest.fn ();
 
-    await getLocations(req, res, next);
+    await getLocation (req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(next).toHaveBeenCalledWith(expect.any(Error));
-  });
-
-  it("should return a 500 error if there is a database error", async () => {
-    // Mock the database call to reject with an error
-    Location.find.mockRejectedValue(new Error("Database error"));
-
-    const req = {};
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const next = jest.fn();
-
-    await getLocations(req, res, next);
-
-    // Check if the status 500 is called
-    expect(next).toHaveBeenCalledWith(expect.any(Error)); // This ensures the error is passed to the next handler
-    expect(res.status).not.toHaveBeenCalled();
+    expect (client.get).toHaveBeenCalledWith ('1');
+    expect (res.status).toHaveBeenCalledWith (200);
+    expect (res.json).toHaveBeenCalledWith (JSON.parse (cachedData));
+    expect (Location.findById).not.toHaveBeenCalled ();
   });
 });
