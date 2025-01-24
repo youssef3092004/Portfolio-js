@@ -1,76 +1,147 @@
-const { describe, it, expect } = require('@jest/globals');
-const { getBookings } = require('../../controllers/bookingController');
-const Booking = require('../../models/bookingModel');
+const { describe, it, expect, afterEach } = require("@jest/globals");
+const { getBookings } = require("../../controllers/bookingController");
+const Booking = require("../../models/bookingModel");
+const client = require("../../config/redisConfig");
 
-jest.mock('../../models/bookingModel');
+jest.mock("../../models/bookingModel", () => ({
+  find: jest.fn().mockReturnThis(),
+  populate: jest.fn().mockReturnThis(),
+  skip: jest.fn().mockReturnThis(),
+  limit: jest.fn().mockReturnThis(),
+  exec: jest.fn(),
+  countDocuments: jest.fn(),
+}));
 
-describe('getBookings Controller', () => {
-  it('should return a 404 error if no bookings are found', async () => {
-    // Mock `find` to return an empty array, simulating no bookings found
-    Booking.find.mockImplementation(() => ({
-      populate: jest.fn().mockReturnThis(),
-      exec: jest.fn().mockResolvedValue([]),
-    }));
+jest.mock("../../config/redisConfig", () => ({
+  get: jest.fn(),
+  setEx: jest.fn(),
+}));
 
-    const req = {};
-    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-    const next = jest.fn();
+jest.mock("../../utils/pagination", () => jest.fn((req) => ({
+  page: req.query.page || 1,
+  limit: req.query.limit || 10,
+  skip: ((req.query.page || 1) - 1) * (req.query.limit || 10),
+})));
 
-    await getBookings(req, res, next);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: 'There is no bookings by this ID' });
+describe("getBookings Controller", () => {
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('should return a 200 status and the bookings if found', async () => {
-    const mockBookings = [
-      {
-        _id: '123',
-        check_in: new Date(),
-        check_out: new Date(),
-        total_price: 100,
-        user: { name: 'User 1' },
-        hotel: { name: 'Hotel 1' },
-        room: { room_number: 101 },
-        discount: { code: 'DISCOUNT10' },
-      },
-    ];
+  it("should return cached data if available", async () => {
+    const cachedData = JSON.stringify([
+      { id: "1", user: "User1", hotel: "Hotel1", room: "Room1", discount: "Discount1" },
+    ]);
+    client.get.mockResolvedValue(cachedData);
 
-    // Mock `find` to return an array of bookings
-    Booking.find.mockImplementation(() => ({
-      populate: jest.fn().mockReturnThis(),
-      exec: jest.fn().mockResolvedValue(mockBookings),
-    }));
-
-    const req = {};
-    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const req = { query: { page: 1, limit: 10 } };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
     const next = jest.fn();
 
     await getBookings(req, res, next);
 
+    expect(client.get).toHaveBeenCalledWith("bookings:page:1:limit:10");
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(JSON.parse(cachedData));
+    expect(Booking.find).not.toHaveBeenCalled();
+  });
+
+  it("should fetch data from MongoDB and cache it when no cached data is found", async () => {
+    const mockBookings = [
+      { id: "1", user: "User1", hotel: "Hotel1", room: "Room1", discount: "Discount1" },
+      { id: "2", user: "User2", hotel: "Hotel2", room: "Room2", discount: "Discount2" },
+    ];
+    client.get.mockResolvedValue(null);
+    Booking.exec.mockResolvedValue(mockBookings);
+    Booking.countDocuments.mockResolvedValue(20);
+
+    const req = { query: { page: 1, limit: 10 } };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    await getBookings(req, res, next);
+
+    expect(client.get).toHaveBeenCalledWith("bookings:page:1:limit:10");
+    expect(Booking.find).toHaveBeenCalled();
+    expect(Booking.populate).toHaveBeenCalledWith("user");
+    expect(Booking.populate).toHaveBeenCalledWith("hotel");
+    expect(Booking.populate).toHaveBeenCalledWith("room");
+    expect(Booking.populate).toHaveBeenCalledWith("discount");
+    expect(Booking.skip).toHaveBeenCalledWith(0);
+    expect(Booking.limit).toHaveBeenCalledWith(10);
+    expect(Booking.exec).toHaveBeenCalled();
+    expect(client.setEx).toHaveBeenCalledWith(
+      "bookings:page:1:limit:10",
+      3600,
+      JSON.stringify(mockBookings)
+    );
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      total: 20,
+      totalPage: 2,
       success: true,
-      message: 'Booking retrieved successfully.',
+      message: "Booking retrieved successfully.",
       data: mockBookings,
     });
   });
 
-  it('should handle unexpected errors and pass them to the next middleware', async () => {
-    const error = new Error('Unexpected error');
+  it("should return a 404 error if no bookings are found", async () => {
+    client.get.mockResolvedValue(null);
+    Booking.exec.mockResolvedValue([]);
 
-    // Mock `find` to throw an error
-    Booking.find.mockImplementation(() => ({
-      populate: jest.fn().mockReturnThis(),
-      exec: jest.fn().mockRejectedValue(error),
-    }));
-
-    const req = {};
-    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+    const req = { query: { page: 1, limit: 10 } };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
     const next = jest.fn();
 
     await getBookings(req, res, next);
 
-    expect(next).toHaveBeenCalledWith(error);
+    expect(client.get).toHaveBeenCalledWith("bookings:page:1:limit:10");
+    expect(Booking.find).toHaveBeenCalled();
+    expect(Booking.populate).toHaveBeenCalledWith("user");
+    expect(Booking.populate).toHaveBeenCalledWith("hotel");
+    expect(Booking.populate).toHaveBeenCalledWith("room");
+    expect(Booking.populate).toHaveBeenCalledWith("discount");
+    expect(Booking.skip).toHaveBeenCalledWith(0);
+    expect(Booking.limit).toHaveBeenCalledWith(10);
+    expect(Booking.exec).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ message: "There is no bookings by this ID" });
+  });
+
+  it("should call next with an error if an exception occurs", async () => {
+    client.get.mockResolvedValue(null);
+    Booking.exec.mockRejectedValue(new Error("Database error"));
+
+    const req = { query: { page: 1, limit: 10 } };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
+    const next = jest.fn();
+
+    await getBookings(req, res, next);
+
+    expect(client.get).toHaveBeenCalledWith("bookings:page:1:limit:10");
+    expect(Booking.find).toHaveBeenCalled();
+    expect(Booking.populate).toHaveBeenCalledWith("user");
+    expect(Booking.populate).toHaveBeenCalledWith("hotel");
+    expect(Booking.populate).toHaveBeenCalledWith("room");
+    expect(Booking.populate).toHaveBeenCalledWith("discount");
+    expect(Booking.skip).toHaveBeenCalledWith(0);
+    expect(Booking.limit).toHaveBeenCalledWith(10);
+    expect(Booking.exec).toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+    expect(res.status).not.toHaveBeenCalled();
   });
 });
