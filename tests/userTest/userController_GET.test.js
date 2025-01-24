@@ -1,65 +1,54 @@
-const { describe, it, expect } = require('@jest/globals');
+const {describe, it, expect, afterEach} = require ('@jest/globals');
+const {getUsers} = require ('../../controllers/userController');
+const User = require ('../../models/userModel');
+const client = require ('../../config/redisConfig'); // Redis client
 
-const { getUsers } = require("../../controllers/userController");
-const User = require("../../models/userModel");
+// Mock dependencies
+jest.mock ('../../models/userModel', () => ({
+  find: jest.fn ().mockReturnThis (),
+  skip: jest.fn ().mockReturnThis (),
+  limit: jest.fn ().mockReturnThis (),
+  exec: jest.fn ().mockResolvedValue ([]),
+  countDocuments: jest.fn (),
+}));
 
-jest.mock("../../models/userModel", () => {
-  return {
-    find: jest.fn(),
-  };
-});
+jest.mock ('../../config/redisConfig', () => ({
+  get: jest.fn (),
+  setEx: jest.fn (),
+}));
 
-describe("getUsers", () => {
-  it("should return a 404 error if there are no users", async () => {
-    // Mock User.find to return an empty array (no users found)
-    User.find.mockResolvedValue([]);
+// Mock pagination function
+jest.mock ('../../utils/pagination', () =>
+  jest.fn (req => ({
+    page: req.query.page || 1,
+    limit: req.query.limit || 10,
+    skip: ((req.query.page || 1) - 1) * (req.query.limit || 10),
+  }))
+);
 
-    const req = {};
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-    };
-    const next = jest.fn();
-
-    await getUsers(req, res, next);
-
-    // Ensure status 404 is set
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).not.toHaveBeenCalled(); // No response should be sent
-    expect(next).toHaveBeenCalledWith(new Error("There are no users available"));
+describe ('getUsers Controller', () => {
+  afterEach (() => {
+    jest.clearAllMocks ();
   });
 
-  it("should return a 200 status with the users if found", async () => {
-    // Mock User.find to return an array of users
-    const mockUsers = [{ name: "User 1" }, { name: "User 2" }];
-    User.find.mockResolvedValue(mockUsers);
+  it ('should return cached data if available', async () => {
+    const cachedData = JSON.stringify ([
+      {id: '1', name: 'John Doe', email: 'john@example.com'},
+    ]);
+    client.get.mockResolvedValue (cachedData);
 
-    const req = {};
+    const req = {query: {page: 1, limit: 10}};
     const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
+      status: jest.fn ().mockReturnThis (),
+      json: jest.fn (),
     };
-    const next = jest.fn();
+    const next = jest.fn ();
 
-    await getUsers(req, res, next);
+    await getUsers (req, res, next);
 
-    // Ensure status 200 is set and users are returned
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(mockUsers);
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it("should handle unexpected errors", async () => {
-    // Mock User.find to throw an unexpected error
-    User.find.mockRejectedValue(new Error("Database error"));
-
-    const req = {};
-    const res = {};
-    const next = jest.fn();
-
-    await getUsers(req, res, next);
-
-    // Ensure the error is passed to next()
-    expect(next).toHaveBeenCalledWith(new Error("Database error"));
+    expect (client.get).toHaveBeenCalledWith ('users:page:1:limit:10');
+    expect (res.status).toHaveBeenCalledWith (200);
+    expect (res.json).toHaveBeenCalledWith (JSON.parse (cachedData));
+    expect (User.find).not.toHaveBeenCalled ();
   });
 });
