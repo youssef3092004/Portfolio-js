@@ -9,6 +9,7 @@ export default [
     languageOptions: {
       sourceType: "commonjs",
       globals: globals.node,
+      ...globals.jest,
     },
   },
   pluginJs.configs.recommended,
