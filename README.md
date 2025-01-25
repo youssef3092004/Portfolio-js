@@ -5,6 +5,7 @@ Bookify is a backend project for booking hotels based on a specific location. In
 
 - [Features](#-features)
 - [Technology Stack](#%EF%B8%8F-technology-stack)
+- [Third-Party Services](#-third-party-services)
 - [Installation](#-installation)
 - [Usage](#-usage)
 - [Tests](#-tests)
@@ -12,14 +13,15 @@ Bookify is a backend project for booking hotels based on a specific location. In
 - [License](#-license)
 - [Git Flow](#-git-flow)
 - [Screenshots](#-screenshots)
+- [Demo and Documentation](#-demo--documentation)
 - [Authors](#-authors)
 
 
 ## 💡 Features
 
-- [x] User authentication (register, login, reset password)
-- [x] User can specify location for the room
 - [x] User can booking room based on specific location
+- [x] User can specify location for the room
+- [x] User authentication (register, login, reset password with email, login with google)
 - [x] User can select amenitys for this room
 - [x] User can payment with stripe
 - [x] finally user can review the room
@@ -31,6 +33,24 @@ Bookify is a backend project for booking hotels based on a specific location. In
 - **Authentication:** JWT (JSON Web Tokens)
 - **Payment Integration:** Stripe
 - **Documentation:** Swagger
+
+## 🤝 Third-Party Services
+
+**Databases and Storage 🗄️** 
+- MongoDB Atlas Cloud
+- Redis Cloud
+
+**Payment Processing 💳**
+- Stripe
+
+**Google Login 🔑**
+- Google Cloud Console
+
+**Email for Password Reset 📧**
+- Gmail SMTP 
+
+**Deployment ☁️**
+- Vercel
 
 ## 💠 Installation
 
@@ -109,6 +129,11 @@ We follow an organized Git Flow for development:
 ---
 ***User Authentication Required: Access endpoints securely by logging in with a valid JWT token.***
 ![authorization in swagger](./assets/authorization.png)
+
+## 🎥📚 Demo & Documentation 
+Check out the Bookify demo and presentation video: [Bookify Demo](https://drive.google.com/file/d/1n-9elQg3maaJV4ht-Skx1U84fLQErxf4/view?usp=sharing)
+
+For API details, visit the doc: [View API Docs](https://bookify-portfolio.vercel.app/api-docs)
 
 ## 👨‍💻 Authors
 
